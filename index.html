@@ -93,7 +93,7 @@
 </head>
 <body>
   <header id="appHeader">
-    <img id="logo" class="logo" src="../IUT_UNIV_2023.png " alt="Logo université" />
+    <img id="logo" class="logo" src="../SAE LIBRE/IUT_UNIV_2023.png " alt="Logo université" />
     <div class="title">
       <h1>IHM Voiture RC - GEII</h1>
       <small id="team">Groupe 2 Voiture RC</small>
@@ -122,6 +122,7 @@
             <input id="streamUrl" type="text" value="http://adresse_ESP32:81/stream" aria-label="URL flux MJPEG">
             <button id="applyStream" class="link primary">Appliquer</button>
             <button id="reloadStream" class="link">Recharger</button>
+            <button id="disconnectStream" class="link danger">Déconnecter le flux</button><!-- AJOUT -->
             <button id="openCamOnly" class="link">Ouvrir la vue caméra seule (nouvel onglet)</button>
           </div>
           <div class="meta" style="margin-top:8px">
@@ -146,11 +147,20 @@
           </div>
 
           <div class="controls" aria-label="Boutons de direction">
-            <div></div><div class="btn" data-dir="forward" aria-label="Avancer (↑ / Z)">↑ / Z</div><div></div>
+            <!-- Ligne 1 : [vide]   [Z]   [vide] -->
+            <div></div>
+            <div class="btn" data-dir="forward" aria-label="Avancer (↑ / Z)">↑ / Z</div>
+            <div></div>
+
+            <!-- Ligne 2 : [Q]   [S]   [D] -->
             <div class="btn" data-dir="left" aria-label="Gauche (← / Q)">← / Q</div>
-            <div class="btn" data-dir="stop" aria-label="Stop (Espace)">STOP</div>
+            <div class="btn" data-dir="backward" aria-label="Reculer (↓ / S)">↓ / S</div>
             <div class="btn" data-dir="right" aria-label="Droite (→ / D)">→ / D</div>
-            <div></div><div class="btn" data-dir="backward" aria-label="Reculer (↓ / S)">↓ / S</div><div></div>
+
+            <!-- Ligne 3 : [vide]  [STOP]  [vide] -->
+            <div></div>
+            <div class="btn" data-dir="stop" aria-label="Stop (Espace)">STOP</div>
+            <div></div>
           </div>
         </div>
         <div class="foot">Fallback HTTP automatique si WS indisponible : <code>/cmd?c=F|B|L|R|S</code>.</div>
@@ -179,6 +189,7 @@
             <input id="streamUrlCam" type="text" value="http://adresse_ESP32:81/stream" aria-label="URL flux MJPEG (caméra seule)">
             <button id="applyStreamCam" class="link primary">Appliquer</button>
             <button id="reloadStreamCam" class="link">Recharger</button>
+            <button id="disconnectStreamCam" class="link danger">Déconnecter le flux</button><!-- AJOUT -->
           </div>
         </div>
         <div class="foot">Astuce : tournez le téléphone en paysage pour une meilleure visibilité. Le plein écran est demandé uniquement pour l’élément vidéo.</div>
@@ -189,39 +200,22 @@
     <section id="view-help" class="view help">
       <div class="card">
         <h2>Aide – Mise en route & utilisation</h2>
-        <div class="content">
-          <ol>
-            <li><strong>Connectez-vous au réseau de l’ESP32</strong> (AP <code>192.168.4.1</code> ou votre réseau local).</li>
-            <li><strong>Ouvrez ce fichier</strong> sur votre navigateur (PC ou smartphone).</li>
-            <li>Dans l’onglet <em>Contrôles + Caméra</em>, entrez :
-              <ul>
-                <li><strong>Flux MJPEG</strong> : ex. <code>http://192.168.4.1:81/stream</code>.</li>
-                <li><strong>WebSocket</strong> : ex. <code>ws://192.168.4.1/ws</code> (si disponible).</li>
-                <li><strong>Base HTTP</strong> : ex. <code>http://192.168.4.1</code> (fallback).</li>
-              </ul>
-            </li>
-            <li>Cliquez <strong>Connexion</strong> (facultatif). Sinon, les commandes passent en <em>HTTP</em> (GET <code>/cmd?c=F|B|L|R|S</code>).</li>
-            <li><strong>Contrôles</strong> : flèches ou ZQSD ; <code>Espace</code>=STOP. Maintenir pour mouvement continu.</li>
-            <li>Pour une vue pilote sur smartphone : onglet <em>Caméra seule</em> → <em>Plein écran vidéo</em> + <em>Anti-veille</em>.</li>
-          </ol>
-          <h3>Paramètres via l’URL (pratique en QR code)</h3>
-          <ul>
-            <li>Vue complète : <code>?view=full&amp;stream=http://IP:81/stream&amp;ws=ws://IP/ws&amp;http=http://IP</code></li>
-            <li>Vue caméra : <code>?view=cam&amp;stream=http://IP:81/stream&amp;logo=URL_LOGO&amp;team=Nom1%20•%20Nom2</code></li>
-          </ul>
-          <h3>Messages d’erreur & diagnostic</h3>
-          <ul>
-            <li><strong>Flux vidéo indisponible</strong> : URL invalide, caméra arrêtée, ou réseau coupé → vérifiez l’IP/port, redémarrez la cam. Bouton <em>Réessayer</em> ou <em>Recharger</em>.</li>
-            <li><strong>WebSocket erreur/déconnexion</strong> : serveur WS non lancé ou mauvais chemin → corrigez l’URL ou utilisez le fallback HTTP.</li>
-            <li><strong>HTTP non joignable</strong> : statut ≠ 200 ou requête impossible → vérifiez <code>http://IP</code> et l’endpoint <code>/cmd</code>.</li>
-          </ul>
-          <h3>Côté ESP32 (à adapter)</h3>
-          <ul>
-            <li>WS reçoit : <code>F,B,L,R,S,PING</code> (chaînes courtes).</li>
-            <li>HTTP GET : <code>/cmd?c=F|B|L|R|S</code> (retour 200 si OK).</li>
-            <li>Flux MJPEG multipart : <code>/stream</code> (<code>multipart/x-mixed-replace</code>).</li>
-          </ul>
-        </div>
+      <div class="content">
+        <ol>
+          <li><strong>Connectez-vous au réseau de l’ESP32</strong> (AP <code>192.168.4.1</code> ou votre réseau local).</li>
+          <li><strong>Ouvrez ce fichier</strong> sur votre navigateur (PC ou smartphone).</li>
+          <li>Dans l’onglet <em>Contrôles + Caméra</em>, entrez :
+            <ul>
+              <li><strong>Flux MJPEG</strong> : ex. <code>http://192.168.4.1:81/stream</code>.</li>
+              <li><strong>WebSocket</strong> : ex. <code>ws://192.168.4.1/ws</code> (si disponible).</li>
+              <li><strong>Base HTTP</strong> : ex. <code>http://192.168.4.1</code> (fallback).</li>
+            </ul>
+          </li>
+          <li>Cliquez <strong>Connexion</strong> (facultatif). Sinon, les commandes passent en <em>HTTP</em> (GET <code>/cmd?c=F|B|L|R|S</code>).</li>
+          <li><strong>Contrôles</strong> : flèches ou ZQSD ; <code>Espace</code>=STOP. Maintenir pour mouvement continu.</li>
+          <li>Pour une vue pilote sur smartphone : onglet <em>Caméra seule</em> → <em>Plein écran vidéo</em> + <em>Anti-veille</em>.</li>
+        </ol>
+      </div>
       </div>
     </section>
   </main>
@@ -234,10 +228,10 @@
     const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
     const qp=new URLSearchParams(location.search);
     const DEFAULTS={
-      STREAM_URL:"http://adresse_ESP32:81/stream",
+      STREAM_URL:"http://webcam.privcom.ch/mjpg/video.mjpg",
       WS_URL:"ws://adresse_ESP32/ws",
       HTTP_BASE:"http://adresse_ESP32",
-      LOGO_URL: "../IUT_UNIV_2023.png ",
+      LOGO_URL: "../SAE LIBRE/IUT_UNIV_2023.png ",
       TEAM_TXT:"Groupe 2 Voiture RC"
     };
 
@@ -274,7 +268,6 @@
       tabCam.classList.toggle("active", isCam);
       tabHelp.classList.toggle("active", isHelp);
       const url=new URL(location.href); url.searchParams.set("view", v); history.replaceState(null,"",url);
-      // Auto-ask only video fullscreen when entering cam tab (best effort)
       if(isCam){ attemptVideoFullscreen(); }
     }
     setView(param("view","full"));
@@ -289,6 +282,9 @@
     const applyStreamCam=$("#applyStreamCam"), reloadStreamCam=$("#reloadStreamCam");
     const streamFullWrap=$("#streamFullWrap"), streamCamWrap=$("#streamCamWrap");
     const retryFull=$("#retryFull"), retryCam=$("#retryCam");
+    // AJOUT : boutons "déconnecter le flux"
+    const btnDisconnectStream = $("#disconnectStream");
+    const btnDisconnectStreamCam = $("#disconnectStreamCam");
 
     const streamDefault = param("stream", DEFAULTS.STREAM_URL);
     setStream(streamDefault);
@@ -299,7 +295,11 @@
       clearStreamError(true); clearStreamError(false);
     }
     function reloadImg(img){
-      try{ const u=new URL(img.src, location.href); u.searchParams.set("_", Date.now()); img.src=u.toString(); }catch{}
+      try{
+        const u=new URL(img.src, location.href);
+        u.searchParams.set("_", Date.now());
+        img.src=u.toString();
+      }catch{}
     }
     function showStreamError(full, message){
       const wrap = full ? streamFullWrap : streamCamWrap;
@@ -321,12 +321,30 @@
     });
     imgFull.addEventListener("load", ()=> clearStreamError(true));
     imgCam.addEventListener("load",  ()=> clearStreamError(false));
-    applyStream.addEventListener("click", ()=>{ const u=(streamUrl.value||"").trim(); if(u){ setStream(u); } else { notify("URL de flux vide.", "warn"); } });
+    applyStream.addEventListener("click", ()=>{
+      const u=(streamUrl.value||"").trim();
+      if(u){ setStream(u); } else { notify("URL de flux vide.", "warn"); }
+    });
     reloadStream.addEventListener("click", ()=> reloadImg(imgFull));
-    applyStreamCam.addEventListener("click", ()=>{ const u=(streamUrlCam.value||"").trim(); if(u){ setStream(u); } else { notify("URL de flux vide.", "warn"); } });
+    applyStreamCam.addEventListener("click", ()=>{
+      const u=(streamUrlCam.value||"").trim();
+      if(u){ setStream(u); } else { notify("URL de flux vide.", "warn"); }
+    });
     reloadStreamCam.addEventListener("click", ()=> reloadImg(imgCam));
     retryFull.addEventListener("click", ()=> reloadImg(imgFull));
     retryCam.addEventListener("click",  ()=> reloadImg(imgCam));
+
+    // AJOUT : fonction de déconnexion du flux (vide le src + message)
+    function disconnectStream(img, full){
+      try{ img.src = ""; }catch{}
+      const wrap  = full ? streamFullWrap : streamCamWrap;
+      const alert = full ? $("#alertFull") : $("#alertCam");
+      if (wrap)  wrap.classList.add("error");
+      if (alert) alert.firstChild.textContent = "Flux déconnecté par l’utilisateur.";
+      notify("Flux vidéo déconnecté.", "warn");
+    }
+    if (btnDisconnectStream)    btnDisconnectStream.addEventListener("click", ()=> disconnectStream(imgFull, true));
+    if (btnDisconnectStreamCam) btnDisconnectStreamCam.addEventListener("click", ()=> disconnectStream(imgCam,  false));
 
     // Open cam tab in new window with params
     $("#openCamOnly").addEventListener("click", ()=>{
@@ -344,7 +362,12 @@
     httpBaseEl.value = param("http", DEFAULTS.HTTP_BASE);
 
     let ws=null;
-    const setWsStatus=(open,txt,level)=>{ wsDot.classList.remove("warn","ok"); wsDot.classList.toggle("ok",!!open); if(level==="warn") wsDot.classList.add("warn"); wsStatus.textContent=txt || (open?"connecté":"déconnecté"); };
+    const setWsStatus=(open,txt,level)=>{
+      wsDot.classList.remove("warn","ok");
+      wsDot.classList.toggle("ok",!!open);
+      if(level==="warn") wsDot.classList.add("warn");
+      wsStatus.textContent=txt || (open?"connecté":"déconnecté");
+    };
 
     function connectWS(){
       const url=wsUrlEl.value.trim();
@@ -367,7 +390,8 @@
     }
     function disconnectWS(){ try{ ws&&ws.close(); }catch{} setWsStatus(false,"déconnecté"); notify("WebSocket déconnectée.", "warn"); }
     async function sendOverHTTP(cmd){
-      const base=httpBaseEl.value.trim().replace(/\/+$/,""); if(!/^https?:\/\//i.test(base)){
+      const base=httpBaseEl.value.trim().replace(/\/+$/,"");
+      if(!/^https?:\/\//i.test(base)){
         notify("Base HTTP invalide (ex: http://192.168.4.1)", "warn"); return;
       }
       try{
