@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
@@ -24,11 +24,12 @@
     .title h1{ margin:0; font-size:1.02rem; }
     .title small{ color:var(--muted); }
     .tabs{ margin-left:auto; display:flex; gap:8px; flex-wrap:wrap; }
-    .tabbtn{
+    .tabbtn, .modebtn{
       background:#0b1220; color:var(--text); border:1px solid rgba(255,255,255,.16);
       padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:600;
     }
     .tabbtn.active{ border-color:var(--accent); outline:2px solid var(--accent); }
+    .modebtn{ margin-left:8px; white-space:nowrap; }
     main{ max-width:1100px; margin:14px auto 18px; padding:0 12px; }
     .card{ background:linear-gradient(180deg,var(--panel),#0b1220); border:1px solid rgba(255,255,255,.08);
       border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
@@ -54,6 +55,8 @@
     .stream.error .alert{ display:block; }
     .meta{ display:flex; gap:12px; flex-wrap:wrap; color:var(--muted); font-size:.92rem; }
     .tag{ padding:4px 8px; border:1px solid rgba(255,255,255,.08); border-radius:999px; }
+
+    /* Grille commandes */
     .controls{ display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:12px; max-width:420px; margin:auto; }
     .btn{ user-select:none; cursor:pointer; text-align:center; border-radius:14px; padding:14px 12px; background:#111827;
       border:1px solid rgba(255,255,255,.1); box-shadow:var(--shadow); font-weight:600; transition: transform .05s ease, border-color .2s ease; }
@@ -89,11 +92,38 @@
     .help ul{ margin: .2rem 0 .2rem 1.1rem; }
     .help li{ margin: .25rem 0; }
     .help code{ background:#0b1220; border:1px solid rgba(255,255,255,.12); padding:2px 6px; border-radius:6px; }
+
+    /* ===================== MODE MOBILE (toggle) ===================== */
+    body.mobile-mode header{ padding:8px 10px; }
+    body.mobile-mode header img.logo{ height:36px; padding:3px; }
+    body.mobile-mode .title h1{ font-size:.95rem; }
+    body.mobile-mode .title small{ font-size:.8rem; }
+    body.mobile-mode main{ max-width:100%; padding:0 8px; margin:10px auto 14px; }
+
+    /* cartes et espacements plus compacts */
+    body.mobile-mode .card h2{ padding:10px 12px; font-size:.95rem; }
+    body.mobile-mode .card .content{ padding:10px; }
+    body.mobile-mode .row{ gap:8px; }
+
+    /* masquer options secondaires en mobile pour aller à l’essentiel */
+    body.mobile-mode #view-full .row input[type="text"]{ display:none; }
+    body.mobile-mode #view-full #openCamOnly{ display:none; }
+    body.mobile-mode #view-cam .row input[type="text"]{ display:none; }
+
+    /* stream plus grand en mobile */
+    body.mobile-mode #view-full .stream{ aspect-ratio:auto; height: calc(100vh - 260px); }
+    body.mobile-mode #view-cam .stream{ height: calc(100vh - 160px); }
+
+    /* boutons plus grands */
+    body.mobile-mode .tabbtn, body.mobile-mode .modebtn, body.mobile-mode button.link{
+      padding:10px 14px; border-radius:12px;
+    }
+    body.mobile-mode .btn{ padding:18px 14px; font-size:1.05rem; }
   </style>
 </head>
 <body>
   <header id="appHeader">
-    <img id="logo" class="logo" src="../SAE LIBRE/IUT_UNIV_2023.png " alt="Logo université" />
+    <img id="logo" class="logo" src="../SAE LIBRE/IUT_UNIV_2023.png" alt="Logo université" />
     <div class="title">
       <h1>IHM Voiture RC - GEII</h1>
       <small id="team">Groupe 2 Voiture RC</small>
@@ -102,6 +132,7 @@
       <button id="tabFull" class="tabbtn active" data-view="full">Contrôles + Caméra</button>
       <button id="tabCam" class="tabbtn" data-view="cam">Caméra seule</button>
       <button id="tabHelp" class="tabbtn" data-view="help">Aide</button>
+      <button id="btnMode" class="modebtn" title="Basculer l’affichage">Mode mobile</button>
     </div>
   </header>
 
@@ -122,7 +153,7 @@
             <input id="streamUrl" type="text" value="http://adresse_ESP32:81/stream" aria-label="URL flux MJPEG">
             <button id="applyStream" class="link primary">Appliquer</button>
             <button id="reloadStream" class="link">Recharger</button>
-            <button id="disconnectStream" class="link danger">Déconnecter le flux</button><!-- AJOUT -->
+            <button id="disconnectStream" class="link danger">Déconnecter le flux</button>
             <button id="openCamOnly" class="link">Ouvrir la vue caméra seule (nouvel onglet)</button>
           </div>
           <div class="meta" style="margin-top:8px">
@@ -189,7 +220,7 @@
             <input id="streamUrlCam" type="text" value="http://adresse_ESP32:81/stream" aria-label="URL flux MJPEG (caméra seule)">
             <button id="applyStreamCam" class="link primary">Appliquer</button>
             <button id="reloadStreamCam" class="link">Recharger</button>
-            <button id="disconnectStreamCam" class="link danger">Déconnecter le flux</button><!-- AJOUT -->
+            <button id="disconnectStreamCam" class="link danger">Déconnecter le flux</button>
           </div>
         </div>
         <div class="foot">Astuce : tournez le téléphone en paysage pour une meilleure visibilité. Le plein écran est demandé uniquement pour l’élément vidéo.</div>
@@ -200,22 +231,22 @@
     <section id="view-help" class="view help">
       <div class="card">
         <h2>Aide – Mise en route & utilisation</h2>
-      <div class="content">
-        <ol>
-          <li><strong>Connectez-vous au réseau de l’ESP32</strong> (AP <code>192.168.4.1</code> ou votre réseau local).</li>
-          <li><strong>Ouvrez ce fichier</strong> sur votre navigateur (PC ou smartphone).</li>
-          <li>Dans l’onglet <em>Contrôles + Caméra</em>, entrez :
-            <ul>
-              <li><strong>Flux MJPEG</strong> : ex. <code>http://192.168.4.1:81/stream</code>.</li>
-              <li><strong>WebSocket</strong> : ex. <code>ws://192.168.4.1/ws</code> (si disponible).</li>
-              <li><strong>Base HTTP</strong> : ex. <code>http://192.168.4.1</code> (fallback).</li>
-            </ul>
-          </li>
-          <li>Cliquez <strong>Connexion</strong> (facultatif). Sinon, les commandes passent en <em>HTTP</em> (GET <code>/cmd?c=F|B|L|R|S</code>).</li>
-          <li><strong>Contrôles</strong> : flèches ou ZQSD ; <code>Espace</code>=STOP. Maintenir pour mouvement continu.</li>
-          <li>Pour une vue pilote sur smartphone : onglet <em>Caméra seule</em> → <em>Plein écran vidéo</em> + <em>Anti-veille</em>.</li>
-        </ol>
-      </div>
+        <div class="content">
+          <ol>
+            <li><strong>Connectez-vous au réseau de l’ESP32</strong> (AP <code>192.168.4.1</code> ou votre réseau local).</li>
+            <li><strong>Ouvrez ce fichier</strong> sur votre navigateur (PC ou smartphone).</li>
+            <li>Dans l’onglet <em>Contrôles + Caméra</em>, entrez :
+              <ul>
+                <li><strong>Flux MJPEG</strong> : ex. <code>http://192.168.4.1:81/stream</code>.</li>
+                <li><strong>WebSocket</strong> : ex. <code>ws://192.168.4.1/ws</code> (si disponible).</li>
+                <li><strong>Base HTTP</strong> : ex. <code>http://192.168.4.1</code> (fallback).</li>
+              </ul>
+            </li>
+            <li>Cliquez <strong>Connexion</strong> (facultatif). Sinon, les commandes passent en <em>HTTP</em> (GET <code>/cmd?c=F|B|L|R|S</code>).</li>
+            <li><strong>Contrôles</strong> : flèches ou ZQSD ; <code>Espace</code>=STOP. Maintenir pour mouvement continu.</li>
+            <li>Pour une vue pilote sur smartphone : onglet <em>Caméra seule</em> → <em>Plein écran vidéo</em> + <em>Anti-veille</em>.</li>
+          </ol>
+        </div>
       </div>
     </section>
   </main>
@@ -251,7 +282,7 @@
 
     const param = (key, fallback)=> qp.get(key) || fallback;
 
-    // Header
+    // Header items
     const logoEl=$("#logo"), teamEl=$("#team");
     logoEl.src = param("logo", DEFAULTS.LOGO_URL);
     teamEl.textContent = "Équipe : " + decodeURIComponent(param("team", encodeURIComponent(DEFAULTS.TEAM_TXT)));
@@ -275,6 +306,32 @@
     tabCam.addEventListener("click",  ()=>setView("cam"));
     tabHelp.addEventListener("click", ()=>setView("help"));
 
+    // ===== Toggle MODE (mobile/desktop)
+    const btnMode = $("#btnMode");
+    function setUIMode(mode){
+      const isMobile = (mode === "mobile");
+      document.body.classList.toggle("mobile-mode", isMobile);
+      btnMode.textContent = isMobile ? "Mode desktop" : "Mode mobile";
+      // Persiste dans l’URL et localStorage
+      const url=new URL(location.href);
+      url.searchParams.set("mode", isMobile ? "mobile" : "desktop");
+      history.replaceState(null,"",url);
+      try{ localStorage.setItem("uiMode", isMobile ? "mobile":"desktop"); }catch{}
+    }
+    // Charger depuis ?mode= ou localStorage
+    (function initMode(){
+      const fromQP = qp.get("mode");
+      if(fromQP){ setUIMode(fromQP); return; }
+      try{
+        const saved = localStorage.getItem("uiMode");
+        if(saved) setUIMode(saved);
+      }catch{}
+    })();
+    btnMode.addEventListener("click", ()=>{
+      const isMobile = document.body.classList.contains("mobile-mode");
+      setUIMode(isMobile ? "desktop" : "mobile");
+    });
+
     // Streams (shared)
     const imgFull=$("#imgFull"), imgCam=$("#imgCam");
     const streamUrl=$("#streamUrl"), streamUrlCam=$("#streamUrlCam");
@@ -282,7 +339,6 @@
     const applyStreamCam=$("#applyStreamCam"), reloadStreamCam=$("#reloadStreamCam");
     const streamFullWrap=$("#streamFullWrap"), streamCamWrap=$("#streamCamWrap");
     const retryFull=$("#retryFull"), retryCam=$("#retryCam");
-    // AJOUT : boutons "déconnecter le flux"
     const btnDisconnectStream = $("#disconnectStream");
     const btnDisconnectStreamCam = $("#disconnectStreamCam");
 
@@ -334,7 +390,7 @@
     retryFull.addEventListener("click", ()=> reloadImg(imgFull));
     retryCam.addEventListener("click",  ()=> reloadImg(imgCam));
 
-    // AJOUT : fonction de déconnexion du flux (vide le src + message)
+    // Déconnecter le flux (vide le src + message)
     function disconnectStream(img, full){
       try{ img.src = ""; }catch{}
       const wrap  = full ? streamFullWrap : streamCamWrap;
@@ -435,7 +491,7 @@
     window.addEventListener("blur", ()=> sendCommand("S"));
     document.addEventListener("visibilitychange", ()=>{ if(document.hidden) sendCommand("S"); });
 
-    // Cam-only tools: Fullscreen on VIDEO element only + Wake Lock
+    // Cam-only tools: Fullscreen only on the video + Wake Lock
     const btnFS=$("#btnFS"), btnWake=$("#btnWake"), btnReload=$("#btnReload");
     if(btnFS){
       btnFS.addEventListener("click", async ()=>{
@@ -451,14 +507,14 @@
           await imgCam.requestFullscreen(); // fullscreen only for the video element
           if(!fromButton) notify("Plein écran vidéo demandé.", "ok");
         }
-      }catch{ /* ignored (needs user gesture) */ }
+      }catch{}
       try{
         if(!wakeLock){
           wakeLock = await navigator.wakeLock.request("screen");
           if(!fromButton) notify("Anti-veille activé (si supporté).", "ok");
           wakeLock.addEventListener("release", ()=>{ wakeLock=null; notify("Anti-veille relâché.", "warn"); });
         }
-      }catch{ /* not supported */ }
+      }catch{}
     }
     if(btnWake){
       btnWake.addEventListener("click", async ()=>{
