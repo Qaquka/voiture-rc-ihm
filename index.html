@@ -112,7 +112,7 @@
     body.mobile-mode #view-cam .row input[type="text"]{ display:none; }
     body.mobile-mode #view-full .stream{ aspect-ratio:auto; height: calc(100vh - 260px); }
     body.mobile-mode #view-cam .stream{ height: calc(100vh - 160px); }
-    body.mobile-mode .tabbtn, body.mobile-mode .modebtn, body-mobile-mode button.link{ padding:10px 14px; border-radius:12px; }
+    body.mobile-mode .tabbtn, body-mobile-mode .modebtn, body-mobile-mode button.link{ padding:10px 14px; border-radius:12px; }
     body.mobile-mode .btn{ padding:18px 14px; font-size:1.05rem; }
 
     /* ========= HUD (overlay) ========= */
@@ -135,8 +135,10 @@
     .speedometer svg{ width:100%; height:100%; display:block; }
     .needle{ transform-origin:110px 110px; transition: transform .15s ease-out; }
     .speed-digital{
-      position:absolute; left:0; right:0; bottom:10px; text-align:center;
-      font-weight:800; font-size:2.6rem; letter-spacing:1px;
+      position:absolute;
+      left:16px; right:auto; bottom:10px;      /* <- décalée pour meilleure lisibilité */
+      text-align:left;
+      font-weight:800; font-size:2.4rem; letter-spacing:1px;
       text-shadow:0 2px 6px rgba(0,0,0,.5);
     }
     .speed-unit{
@@ -144,10 +146,10 @@
     }
     .tick{ stroke:#94a3b8; opacity:.6; }
     .tickMajor{ stroke:#e5e7eb; opacity:.9; }
-    .arc-bg{ stroke:#3f475e; }
+    .arc-bg{ stroke:#3f475e; opacity:.15; }    /* <- très léger / quasiment invisible */
     .arc-prog{ stroke:#22c55e; filter: drop-shadow(0 0 6px rgba(34,197,94,.6)); transition: stroke .2s, stroke-dashoffset .15s; }
-    .zone-warn{ stroke:#f59e0b; }
-    .zone-danger{ stroke:#ef4444; }
+    .zone-warn{ stroke:#f59e0b; opacity:.7; }
+    .zone-danger{ stroke:#ef4444; opacity:.9; }
   </style>
 </head>
 <body>
@@ -180,12 +182,11 @@
               <!-- Compteur vitesse -->
               <div class="speedometer" aria-label="Compteur de vitesse">
                 <svg viewBox="0 0 220 120" role="img" aria-hidden="true">
-                  <!-- arc de fond -->
-                  <path id="arcPath" d="M20,110 A90,90 0 0 1 200,110" fill="none" stroke-width="14" class="arc-bg"/>
-                  <!-- zones couleur (orange 60-88%, rouge 88-100%) -->
-                  <path d="M20,110 A90,90 0 0 1 154,92" fill="none" stroke-width="14" class="arc-bg"/> <!-- juste pour base -->
-                  <path id="zoneWarn" d="M154,92 A90,90 0 0 1 184,103" fill="none" stroke-width="14" class="zone-warn" opacity=".65"/>
-                  <path id="zoneDanger" d="M184,103 A90,90 0 0 1 200,110" fill="none" stroke-width="14" class="zone-danger" opacity=".9"/>
+                  <!-- arc de fond (léger) -->
+                  <path d="M20,110 A90,90 0 0 1 200,110" fill="none" stroke-width="14" class="arc-bg"/>
+                  <!-- zones couleur -->
+                  <path id="zoneWarn"   d="M154,92 A90,90 0 0 1 184,103" fill="none" stroke-width="14" class="zone-warn"/>
+                  <path id="zoneDanger" d="M184,103 A90,90 0 0 1 200,110" fill="none" stroke-width="14" class="zone-danger"/>
                   <!-- progression -->
                   <path id="arcProg" d="M20,110 A90,90 0 0 1 200,110" fill="none" stroke-width="14" class="arc-prog" stroke-linecap="round" stroke-dasharray="0 999"/>
                   <!-- ticks -->
@@ -200,7 +201,7 @@
                 <div class="speed-unit">KM/H</div>
               </div>
 
-              <!-- Vitesse texte (conservée pour accessibilité) -->
+              <!-- Vitesse texte (garde accessibilité) -->
               <div class="speed" style="display:none">
                 <span class="label">Vit.</span>
                 <span class="val" id="speedVal">0.0</span><span class="unit">km/h</span>
@@ -285,7 +286,6 @@
           <div class="stream" id="streamCamWrap" style="margin-top:10px">
             <!-- === HUD CAM === -->
             <div class="hud" id="hudCam" aria-live="polite">
-              <!-- On réutilise le digital uniquement côté mobile -->
               <div class="speed-digital" style="position:static;font-size:2rem;margin-right:10px">
                 <span id="speedValCam">0.0</span> <span class="unit">km/h</span>
               </div>
@@ -342,87 +342,48 @@
   <div id="toast" aria-live="polite" aria-atomic="true"></div>
 
   <script>
-    // ===== Helpers & defaults =====
     const $=(s,r=document)=>r.querySelector(s);
-    const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
     const qp=new URLSearchParams(location.search);
-    const DEFAULTS={
-      STREAM_URL:"http://webcam.privcom.ch/mjpg/video.mjpg",
-      WS_URL:"ws://adresse_ESP32/ws",
-      HTTP_BASE:"http://adresse_ESP32",
-      LOGO_URL: "iut_univ_blanc.png",
-      TEAM_TXT:"Groupe 2 Voiture RC"
-    };
-
-    // ---- Vitesse max (demande) ----
+    const DEFAULTS={ STREAM_URL:"http://webcam.privcom.ch/mjpg/video.mjpg", WS_URL:"ws://adresse_ESP32/ws", HTTP_BASE:"http://adresse_ESP32", LOGO_URL:"iut_univ_blanc.png", TEAM_TXT:"Groupe 2 Voiture RC" };
     const SPEED_MAX = 25; // km/h
 
-    function notify(msg, level="err", actions=[]){
-      const wrap=$("#toast");
-      const el=document.createElement("div");
-      el.className=`toast ${level}`;
-      const btns = actions.map(a=>`<button data-act="${a.id||'act'}">${a.label}</button>`).join("");
-      el.innerHTML=`<span>${msg}</span><span>${btns}</span>`;
-      wrap.appendChild(el);
-      actions.forEach(a=>{
-        const b = el.querySelector(`button[data-act="${a.id||'act'}"]`);
-        if(b) b.addEventListener("click", ()=>{ try{ a.onClick?.(); }catch{}; el.remove(); });
-      });
-      setTimeout(()=>{ try{ el.remove(); }catch{}; }, 4000);
-    }
-
-    const param = (key, fallback)=> qp.get(key) || fallback;
-
-    // Header items (respecte tes valeurs par défaut)
     const logoEl=$("#logo"), teamEl=$("#team");
-    logoEl.src = param("logo", DEFAULTS.LOGO_URL);
+    logoEl.src = qp.get("logo") || DEFAULTS.LOGO_URL;
     logoEl.addEventListener("error", ()=>{ if(!logoEl.dataset.fallback){ logoEl.dataset.fallback="1"; logoEl.src="iut_univ_blanc.png"; }});
-    teamEl.textContent = "Équipe : " + decodeURIComponent(param("team", encodeURIComponent(DEFAULTS.TEAM_TXT)));
+    teamEl.textContent = "Équipe : " + decodeURIComponent(qp.get("team") || encodeURIComponent(DEFAULTS.TEAM_TXT));
 
-    // Tabs
-    const tabFull=$("#tabFull"), tabCam=$("#tabCam"), tabHelp=$("#tabHelp");
+    // Views
     const viewFull=$("#view-full"), viewCam=$("#view-cam"), viewHelp=$("#view-help");
     function setView(v){
       const isFull = v==="full", isCam = v==="cam", isHelp = v==="help";
       viewFull.classList.toggle("active", isFull);
       viewCam.classList.toggle("active", isCam);
       viewHelp.classList.toggle("active", isHelp);
-      tabFull.classList.toggle("active", isFull);
-      tabCam.classList.toggle("active", isCam);
-      tabHelp.classList.toggle("active", isHelp);
       const url=new URL(location.href); url.searchParams.set("view", v); history.replaceState(null,"",url);
       if(isCam){ attemptVideoFullscreen(); }
     }
-    setView(param("view","full"));
-    tabFull.addEventListener("click", ()=>setView("full"));
-    tabCam.addEventListener("click",  ()=>setView("cam"));
-    tabHelp.addEventListener("click", ()=>setView("help"));
+    setView(qp.get("view") || "full");
+    $("#tabFull").addEventListener("click", ()=>setView("full"));
+    $("#tabCam").addEventListener("click",  ()=>setView("cam"));
+    $("#tabHelp").addEventListener("click", ()=>setView("help"));
 
-    // ===== Toggle MODE (mobile/desktop)
-    const btnMode = $("#btnMode");
+    // Mode UI
+    const btnMode=$("#btnMode");
     function setUIMode(mode){
       const isMobile = (mode === "mobile");
       document.body.classList.toggle("mobile-mode", isMobile);
       btnMode.textContent = isMobile ? "Mode desktop" : "Mode mobile";
-      const url=new URL(location.href);
-      url.searchParams.set("mode", isMobile ? "mobile" : "desktop");
-      history.replaceState(null,"",url);
+      const url=new URL(location.href); url.searchParams.set("mode", isMobile ? "mobile" : "desktop"); history.replaceState(null,"",url);
       try{ localStorage.setItem("uiMode", isMobile ? "mobile":"desktop"); }catch{}
     }
     (function initMode(){
       const fromQP = qp.get("mode");
       if(fromQP){ setUIMode(fromQP); return; }
-      try{
-        const saved = localStorage.getItem("uiMode");
-        if(saved) setUIMode(saved);
-      }catch{}
+      try{ const saved = localStorage.getItem("uiMode"); if(saved) setUIMode(saved); }catch{}
     })();
-    btnMode.addEventListener("click", ()=>{
-      const isMobile = document.body.classList.contains("mobile-mode");
-      setUIMode(isMobile ? "desktop" : "mobile");
-    });
+    btnMode.addEventListener("click", ()=> setUIMode(document.body.classList.contains("mobile-mode") ? "desktop" : "mobile"));
 
-    // Streams (shared)
+    // Streams
     const imgFull=$("#imgFull"), imgCam=$("#imgCam");
     const streamUrl=$("#streamUrl"), streamUrlCam=$("#streamUrlCam");
     const applyStream=$("#applyStream"), reloadStream=$("#reloadStream");
@@ -432,82 +393,40 @@
     const btnDisconnectStream = $("#disconnectStream");
     const btnDisconnectStreamCam = $("#disconnectStreamCam");
 
-    const streamDefault = param("stream", DEFAULTS.STREAM_URL);
-    setStream(streamDefault);
-
     function setStream(url){
       imgFull.src = url; imgCam.src = url;
       streamUrl.value = url; streamUrlCam.value = url;
-      clearStreamError(true); clearStreamError(false);
+      streamFullWrap.classList.remove("error"); streamCamWrap.classList.remove("error");
     }
-    function reloadImg(img){
-      try{
-        const u=new URL(img.src, location.href);
-        u.searchParams.set("_", Date.now());
-        img.src=u.toString();
-      }catch{}
-    }
-    function showStreamError(full, message){
-      const wrap = full ? streamFullWrap : streamCamWrap;
-      wrap.classList.add("error");
-      const alert = full ? $("#alertFull") : $("#alertCam");
-      alert.firstChild.textContent = message || "Flux vidéo indisponible.";
-    }
-    function clearStreamError(full){
-      const wrap = full ? streamFullWrap : streamCamWrap;
-      wrap.classList.remove("error");
-    }
-    imgFull.addEventListener("error", ()=>{
-      showStreamError(true, "Flux vidéo indisponible (URL invalide, caméra arrêtée ou réseau HS).");
-      notify("Erreur flux vidéo (vue complète). Vérifiez l’URL ou la connexion.", "err", [{id:"r",label:"Réessayer",onClick:()=>reloadImg(imgFull)}]);
-    });
-    imgCam.addEventListener("error", ()=>{
-      showStreamError(false, "Flux vidéo indisponible (URL invalide, caméra arrêtée ou réseau HS).");
-      notify("Erreur flux vidéo (vue caméra). Vérifiez l’URL ou la connexion.", "err", [{id:"r",label:"Réessayer",onClick:()=>reloadImg(imgCam)}]);
-    });
-    imgFull.addEventListener("load", ()=> clearStreamError(true));
-    imgCam.addEventListener("load",  ()=> clearStreamError(false));
-    applyStream.addEventListener("click", ()=>{
-      const u=(streamUrl.value||"").trim();
-      if(u){ setStream(u); } else { notify("URL de flux vide.", "warn"); }
-    });
-    reloadStream.addEventListener("click", ()=> reloadImg(imgFull));
-    applyStreamCam.addEventListener("click", ()=>{
-      const u=(streamUrlCam.value||"").trim();
-      if(u){ setStream(u); } else { notify("URL de flux vide.", "warn"); }
-    });
-    reloadStreamCam.addEventListener("click", ()=> reloadImg(imgCam));
+    setStream(qp.get("stream") || DEFAULTS.STREAM_URL);
+
+    function reloadImg(img){ try{ const u=new URL(img.src, location.href); u.searchParams.set("_", Date.now()); img.src=u.toString(); }catch{} }
+    function showStreamError(full,msg){ const wrap= full?streamFullWrap:streamCamWrap; wrap.classList.add("error"); const a= full?$("#alertFull"):$("#alertCam"); a.firstChild.textContent = msg||"Flux vidéo indisponible."; }
+    imgFull.addEventListener("error", ()=> showStreamError(true,"Flux vidéo indisponible (URL invalide, caméra arrêtée ou réseau HS)."));
+    imgCam.addEventListener("error", ()=> showStreamError(false,"Flux vidéo indisponible (URL invalide, caméra arrêtée ou réseau HS)."));
+    $("#applyStream").addEventListener("click", ()=>{ const u=(streamUrl.value||"").trim(); if(u) setStream(u); });
+    $("#reloadStream").addEventListener("click", ()=> reloadImg(imgFull));
+    $("#applyStreamCam").addEventListener("click", ()=>{ const u=(streamUrlCam.value||"").trim(); if(u) setStream(u); });
+    $("#reloadStreamCam").addEventListener("click", ()=> reloadImg(imgCam));
     retryFull.addEventListener("click", ()=> reloadImg(imgFull));
     retryCam.addEventListener("click",  ()=> reloadImg(imgCam));
+    btnDisconnectStream?.addEventListener("click", ()=>{ imgFull.src=""; streamFullWrap.classList.add("error"); $("#alertFull").firstChild.textContent="Flux déconnecté par l’utilisateur."; });
+    btnDisconnectStreamCam?.addEventListener("click", ()=>{ imgCam.src=""; streamCamWrap.classList.add("error"); $("#alertCam").firstChild.textContent="Flux déconnecté par l’utilisateur."; });
 
-    function disconnectStream(img, full){
-      try{ img.src = ""; }catch{}
-      const wrap  = full ? streamFullWrap : streamCamWrap;
-      const alert = full ? $("#alertFull") : $("#alertCam");
-      if (wrap)  wrap.classList.add("error");
-      if (alert) alert.firstChild.textContent = "Flux déconnecté par l’utilisateur.";
-      notify("Flux vidéo déconnecté.", "warn");
-    }
-    if (btnDisconnectStream)    btnDisconnectStream.addEventListener("click", ()=> disconnectStream(imgFull, true));
-    if (btnDisconnectStreamCam) btnDisconnectStreamCam.addEventListener("click", ()=> disconnectStream(imgCam,  false));
-
-    // Open cam tab in new window with params
     $("#openCamOnly").addEventListener("click", ()=>{
       const u = (streamUrl.value||DEFAULTS.STREAM_URL).trim();
       const url = `${location.pathname}?view=cam&stream=${encodeURIComponent(u)}&logo=${encodeURIComponent(logoEl.src)}&team=${encodeURIComponent(teamEl.textContent.replace(/^Équipe :\s*/,''))}`;
       window.open(url, "_blank");
     });
 
-    // WebSocket + HTTP fallback
+    // ---- WS + HTTP (inchangé) ----
     const wsUrlEl=$("#wsUrl"), httpBaseEl=$("#httpBase");
     const btnConnect=$("#btnConnect"), btnDisconnect=$("#btnDisconnect");
     const btnPing=$("#btnPing"), btnStop=$("#btnStop");
     const wsDot=$("#wsDot"), wsStatus=$("#wsStatus");
-    wsUrlEl.value = param("ws", DEFAULTS.WS_URL);
-    httpBaseEl.value = param("http", DEFAULTS.HTTP_BASE);
-
-    let ws=null;
-    let lastPingAt = null; // pour calcul RTT
+    wsUrlEl.value = qp.get("ws") || DEFAULTS.WS_URL;
+    httpBaseEl.value = qp.get("http") || DEFAULTS.HTTP_BASE;
+    let ws=null, lastPingAt=null;
 
     const setWsStatus=(open,txt,level)=>{
       wsDot.classList.remove("warn","ok");
@@ -518,36 +437,26 @@
 
     function connectWS(){
       const url=wsUrlEl.value.trim();
-      if(!/^wss?:\/\//i.test(url)){
-        notify("URL WebSocket invalide (ex: ws://192.168.4.1/ws)", "warn");
-        return;
-      }
+      if(!/^wss?:\/\//i.test(url)) return;
       try{ if(ws&&ws.readyState===WebSocket.OPEN) ws.close(); }catch{}
       setWsStatus(false,"connexion…","warn");
-      try{ ws=new WebSocket(url); }
-      catch(e){ notify("Échec d’ouverture WebSocket (URL invalide ?)", "err"); setWsStatus(false,"erreur"); return; }
-
-      ws.addEventListener("open", ()=>{ setWsStatus(true,"connecté"); notify("WebSocket connectée.", "ok"); });
-      ws.addEventListener("close",()=>{ setWsStatus(false,"déconnecté"); notify("WebSocket déconnectée.", "warn"); });
-      ws.addEventListener("error",()=>{ setWsStatus(false,"erreur"); notify("Erreur WebSocket (réseau / serveur).", "err"); });
-
-      // Réception télémétrie via WS
+      try{ ws=new WebSocket(url); }catch{ setWsStatus(false,"erreur"); return; }
+      ws.addEventListener("open", ()=> setWsStatus(true,"connecté"));
+      ws.addEventListener("close",()=> setWsStatus(false,"déconnecté"));
+      ws.addEventListener("error",()=> setWsStatus(false,"erreur"));
       ws.addEventListener("message",(ev)=>{
         try{
           let payload = {};
           try{ const obj = JSON.parse(ev.data); if(obj && typeof obj === "object") payload = obj; }
           catch{
             const s = String(ev.data).trim();
-            const mSpd = s.match(/^SPD\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
-            const mBat = s.match(/^BATT\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
-            const mPing= s.match(/^PING\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
+            const mSpd=s.match(/^SPD\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
+            const mBat=s.match(/^BATT\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
+            const mPing=s.match(/^PING\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
             if(mSpd) payload.speed = parseFloat(mSpd[1]);
             if(mBat) payload.battery = parseFloat(mBat[1]);
             if(mPing) payload.ping = parseFloat(mPing[1]);
-            if(/^PONG(?:[:\s]\d+)?$/i.test(s) && lastPingAt!=null){
-              const rtt = Math.round(performance.now() - lastPingAt);
-              updatePing(rtt); lastPingAt=null;
-            }
+            if(/^PONG(?:[:\s]\d+)?$/i.test(s) && lastPingAt!=null){ updatePing(Math.round(performance.now()-lastPingAt)); lastPingAt=null; }
           }
           if("speed" in payload)   updateSpeed(payload.speed);
           if("battery" in payload) updateBattery(payload.battery);
@@ -555,205 +464,123 @@
         }catch{}
       });
     }
-    function disconnectWS(){ try{ ws&&ws.close(); }catch{} setWsStatus(false,"déconnecté"); notify("WebSocket déconnectée.", "warn"); }
+    function disconnectWS(){ try{ ws&&ws.close(); }catch{} setWsStatus(false,"déconnecté"); }
     async function sendOverHTTP(cmd){
       const base=httpBaseEl.value.trim().replace(/\/+$/,"");
-      if(!/^https?:\/\//i.test(base)){ notify("Base HTTP invalide (ex: http://192.168.4.1)", "warn"); return; }
-      try{
-        const res = await fetch(`${base}/cmd?c=${encodeURIComponent(cmd)}`,{cache:"no-store"});
-        if(!res.ok){ notify(`HTTP ${res.status} lors de l'envoi de la commande.`, "warn"); }
-        else{ notify("Commande envoyée (HTTP).", "ok"); }
-      }catch{ notify("Erreur réseau HTTP (commande non envoyée).", "err"); }
+      if(!/^https?:\/\//i.test(base)) return;
+      try{ await fetch(`${base}/cmd?c=${encodeURIComponent(cmd)}`,{cache:"no-store"}); }catch{}
     }
     function sendCommand(cmd){
-      if(ws&&ws.readyState===WebSocket.OPEN){
-        try{ ws.send(cmd); notify("Commande envoyée (WS).", "ok"); return; }catch{ notify("Échec envoi WS, bascule HTTP.", "warn"); }
-      }
+      if(ws&&ws.readyState===WebSocket.OPEN){ try{ ws.send(cmd); return; }catch{} }
       sendOverHTTP(cmd);
     }
     btnConnect.addEventListener("click", connectWS);
     btnDisconnect.addEventListener("click", disconnectWS);
-    btnPing.addEventListener("click", ()=>{
-      if(ws && ws.readyState===WebSocket.OPEN){ lastPingAt = performance.now(); try{ ws.send("PING"); }catch{} }
-      else{ notify("WS non connecté : impossible de mesurer le ping (RTT).", "warn"); }
-    });
+    btnPing.addEventListener("click", ()=>{ if(ws&&ws.readyState===WebSocket.OPEN){ lastPingAt=performance.now(); try{ ws.send("PING"); }catch{} }});
     btnStop.addEventListener("click", ()=> sendCommand("S"));
 
-    // Keyboard control (FULL view only)
+    // Clavier
     const pressed=new Set();
     const KeyMap={"ArrowUp":"F","KeyZ":"F","ArrowDown":"B","KeyS":"B","ArrowLeft":"L","KeyQ":"L","ArrowRight":"R","KeyD":"R","Space":"S"};
-    function handleKey(code, down){
-      if(!(code in KeyMap)) return;
-      const cmd = KeyMap[code];
-      if(cmd==="S"){ sendCommand("S"); return; }
-      if(down){ sendCommand(cmd); } else { sendCommand("S"); }
-    }
-    window.addEventListener("keydown",(e)=>{
-      const c=e.code; if(!(c in KeyMap)) return;
-      if(!viewFull.classList.contains("active")) return;
-      e.preventDefault(); if(pressed.has(c)) return; pressed.add(c); handleKey(c,true);
-    },{passive:false});
-    window.addEventListener("keyup",(e)=>{
-      const c=e.code; if(!(c in KeyMap)) return;
-      if(!viewFull.classList.contains("active")) return;
-      e.preventDefault(); pressed.delete(c); handleKey(c,false);
-    },{passive:false});
+    function handleKey(code, down){ if(!(code in KeyMap)) return; const cmd=KeyMap[code]; if(cmd==="S"){ sendCommand("S"); return; } if(down){ sendCommand(cmd); } else { sendCommand("S"); } }
+    window.addEventListener("keydown",(e)=>{ const c=e.code; if(!(c in KeyMap)) return; if(!viewFull.classList.contains("active")) return; e.preventDefault(); if(pressed.has(c)) return; pressed.add(c); handleKey(c,true); },{passive:false});
+    window.addEventListener("keyup",(e)=>{ const c=e.code; if(!(c in KeyMap)) return; if(!viewFull.classList.contains("active")) return; e.preventDefault(); pressed.delete(c); handleKey(c,false); },{passive:false});
     window.addEventListener("blur", ()=> sendCommand("S"));
     document.addEventListener("visibilitychange", ()=>{ if(document.hidden) sendCommand("S"); });
 
-    // ===== Plein écran CONTAINER + Wake Lock
+    // Plein écran + Wake Lock
     const btnFS=$("#btnFS"), btnReload=$("#btnReload");
-    function requestFullscreenOn(el){
-      if(!el) return;
-      if (el.requestFullscreen) { el.requestFullscreen().catch(()=>{}); return; }
-      if (el.webkitRequestFullscreen) { try{ el.webkitRequestFullscreen(); }catch{} }
-    }
-    if(btnFS){
-      btnFS.addEventListener("click", ()=>{
-        requestFullscreenOn(document.getElementById("streamCamWrap"));
-        enableWakeLock();
-      });
-    }
-    if(btnReload){ btnReload.addEventListener("click", ()=> reloadImg(imgCam)); }
+    function requestFullscreenOn(el){ if(!el) return; if (el.requestFullscreen) { el.requestFullscreen().catch(()=>{}); return; } if (el.webkitRequestFullscreen) { try{ el.webkitRequestFullscreen(); }catch{} } }
+    btnFS?.addEventListener("click", ()=>{ requestFullscreenOn(document.getElementById("streamCamWrap")); enableWakeLock(); });
+    btnReload?.addEventListener("click", ()=> reloadImg(imgCam));
+    let wakeLock=null; async function enableWakeLock(){ try{ if(!wakeLock){ wakeLock = await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release", ()=>{ wakeLock=null; }); } }catch{} }
+    async function attemptVideoFullscreen(){ const wrap=document.getElementById("streamCamWrap"); if(!wrap) return; try{ if(document.fullscreenElement !== wrap){ if (wrap.requestFullscreen) await wrap.requestFullscreen(); else if (wrap.webkitRequestFullscreen) wrap.webkitRequestFullscreen(); } }catch{} enableWakeLock(); }
 
-    let wakeLock=null;
-    async function enableWakeLock(){
-      try{
-        if(!wakeLock){
-          wakeLock = await navigator.wakeLock.request("screen");
-          notify("Anti-veille activé (si supporté).", "ok");
-          wakeLock.addEventListener("release", ()=>{ wakeLock=null; notify("Anti-veille relâché.", "warn"); });
-        }
-      }catch{}
-    }
-    async function attemptVideoFullscreen(fromButton=false){
-      const wrap = document.getElementById("streamCamWrap");
-      if(!wrap) return;
-      try{
-        if(document.fullscreenElement !== wrap){
-          if (wrap.requestFullscreen) { await wrap.requestFullscreen(); }
-          else if (wrap.webkitRequestFullscreen) { wrap.webkitRequestFullscreen(); }
-          if(!fromButton) notify("Plein écran (HUD) demandé.", "ok");
-        }
-      }catch{}
-      enableWakeLock();
-    }
-
-    // ====== Compteur vitesse (SVG) ======
+    /* ===== Compteur vitesse ===== */
     const needle = $("#needle");
     const arcProg = $("#arcProg");
     const speedVal = $("#speedVal");
     const speedValBig = $("#speedValBig");
     const speedValCam = $("#speedValCam");
 
-    // Préparer les ticks 0..25 (toutes les 5, majors)
+    // Ticks 0..25
     (function buildTicks(){
       const g = $("#ticks");
-      const start = -180 + 20; // -160°
-      const end   =  -20;      // -20°
-      const span  = end - start;
+      const start = -160; const end = -20; const span  = end - start;
       for(let v=0; v<=SPEED_MAX; v++){
-        const t = v / SPEED_MAX;
-        const ang = (start + t*span) * Math.PI/180;
-        const R1 = (v%5===0)? 82 : 88;
-        const R2 = 96;
-        const x1 = 110 + R1*Math.cos(ang);
-        const y1 = 110 + R1*Math.sin(ang);
-        const x2 = 110 + R2*Math.cos(ang);
-        const y2 = 110 + R2*Math.sin(ang);
-        const cls = (v%5===0) ? "tickMajor" : "tick";
-        const ln = document.createElementNS("http://www.w3.org/2000/svg","line");
+        const t=v/SPEED_MAX, ang=(start+t*span)*Math.PI/180;
+        const R1 = (v%5===0)? 82 : 88, R2 = 96;
+        const x1=110+R1*Math.cos(ang), y1=110+R1*Math.sin(ang);
+        const x2=110+R2*Math.cos(ang), y2=110+R2*Math.sin(ang);
+        const ln=document.createElementNS("http://www.w3.org/2000/svg","line");
         ln.setAttribute("x1",x1.toFixed(1)); ln.setAttribute("y1",y1.toFixed(1));
         ln.setAttribute("x2",x2.toFixed(1)); ln.setAttribute("y2",y2.toFixed(1));
-        ln.setAttribute("class",cls); ln.setAttribute("stroke-width",(v%5===0)?2:1);
+        ln.setAttribute("class",(v%5===0)?"tickMajor":"tick"); ln.setAttribute("stroke-width",(v%5===0)?2:1);
         g.appendChild(ln);
         if(v%5===0){
-          const tx = 110 + 70*Math.cos(ang);
-          const ty = 110 + 70*Math.sin(ang)+4;
-          const text = document.createElementNS("http://www.w3.org/2000/svg","text");
+          const tx=110+70*Math.cos(ang), ty=110+70*Math.sin(ang)+4;
+          const text=document.createElementNS("http://www.w3.org/2000/svg","text");
           text.setAttribute("x",tx.toFixed(1)); text.setAttribute("y",ty.toFixed(1));
-          text.setAttribute("fill","#e5e7eb"); text.setAttribute("font-size","10");
-          text.setAttribute("text-anchor","middle");
-          text.textContent = v;
-          g.appendChild(text);
+          text.setAttribute("fill","#e5e7eb"); text.setAttribute("font-size","10"); text.setAttribute("text-anchor","middle");
+          text.textContent=v; g.appendChild(text);
         }
       }
-      // config de l'arc progressif
       const arcLen = Math.PI*90; // demi-cercle de rayon 90
       arcProg.setAttribute("stroke-dasharray", `${arcLen} 999`);
       arcProg.dataset.arcLen = arcLen;
     })();
 
-    let _speedDisplay = 0; // lissé (km/h)
-
-    function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
-
+    let _speedDisplay = 0; // km/h lissé
+    function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
     function setNeedleBySpeed(v){
-      const vClamped = clamp(v, 0, SPEED_MAX);
-      // angle -160° .. -20° (span 140°)
-      const ang = -160 + (vClamped / SPEED_MAX) * 140;
-      needle.style.transform = `rotate(${ang+180}deg)`; // +180 car coordonnées SVG
-      // arc progression
+      const vC = clamp(v,0,SPEED_MAX);
+      const ang = -160 + (vC / SPEED_MAX) * 140;
+      needle.style.transform = `rotate(${ang+180}deg)`;
       const arcLen = parseFloat(arcProg.dataset.arcLen || "282.7");
-      const dash = (vClamped/SPEED_MAX) * arcLen;
+      const dash = (vC/SPEED_MAX) * arcLen;
       arcProg.setAttribute("stroke-dasharray", `${dash} 999`);
-      // couleur: vert -> orange -> rouge
-      if (vClamped >= SPEED_MAX*0.88) arcProg.setAttribute("stroke", "#ef4444");
-      else if (vClamped >= SPEED_MAX*0.6) arcProg.setAttribute("stroke", "#f59e0b");
-      else arcProg.setAttribute("stroke", "#22c55e");
+      if (vC >= SPEED_MAX*0.88)      arcProg.setAttribute("stroke", "#ef4444");
+      else if (vC >= SPEED_MAX*0.60) arcProg.setAttribute("stroke", "#f59e0b");
+      else                            arcProg.setAttribute("stroke", "#22c55e");
     }
-
-    // lissage simple (exponential smoothing) pour un rendu fluide
     function smoothTo(target){
-      const alpha = 0.25; // 0..1
+      const alpha = 0.25;
       _speedDisplay = _speedDisplay + alpha * (target - _speedDisplay);
       setNeedleBySpeed(_speedDisplay);
-      const txt = Math.round(_speedDisplay);
+      // numérique = valeur cible immédiate (pas lissée) pour éviter le 06 en transition
+      const txt = Math.round(clamp(target,0,SPEED_MAX));
       if(speedValBig) speedValBig.textContent = txt.toString().padStart(2,'0');
-      if(speedVal) speedVal.textContent = _speedDisplay.toFixed(1);
-      if(speedValCam) speedValCam.textContent = _speedDisplay.toFixed(1);
+      if(speedVal)    speedVal.textContent    = clamp(target,0,SPEED_MAX).toFixed(1);
+      if(speedValCam) speedValCam.textContent = clamp(target,0,SPEED_MAX).toFixed(1);
     }
-
-    // ====== HUD helpers (batterie / ping) ======
-    const battVal = $("#battVal"), battValCam = $("#battValCam");
-    const bfill = $("#bfill"), bfillCam = $("#bfillCam");
-    const pingVal = $("#pingVal"), pingValCam = $("#pingValCam");
-
     function updateSpeed(v){
       const n = Number.isFinite(v) ? v : 0;
-      // boucle d'animation courte pour lisser
-      const frames = 4; // ~60ms
-      let i=0;
-      const start = _speedDisplay, delta = (n - start);
-      (function anim(){
-        i++; smoothTo(start + delta*(i/frames));
-        if(i<frames) requestAnimationFrame(anim);
-      })();
+      const frames = 6;
+      let i=0; const start = _speedDisplay, delta = (clamp(n,0,SPEED_MAX) - start);
+      (function anim(){ i++; smoothTo(start + delta*(i/frames)); if(i<frames) requestAnimationFrame(anim); })();
     }
+
+    // Batterie / Ping
+    const battVal=$("#battVal"), battValCam=$("#battValCam");
+    const bfill=$("#bfill"), bfillCam=$("#bfillCam");
+    const pingVal=$("#pingVal"), pingValCam=$("#pingValCam");
     function updateBattery(pct){
       if(!Number.isFinite(pct)) return;
-      const n = clamp(pct, 0, 100);
-      if(battVal) battVal.textContent = String(Math.round(n));
-      if(battValCam) battValCam.textContent = String(Math.round(n));
-      const w = `${n}%`;
-      const col = n<20?'#ef4444':(n<50?'#f59e0b':'#22c55e');
-      if(bfill){ bfill.style.width = w; bfill.style.background = col; }
-      if(bfillCam){ bfillCam.style.width = w; bfillCam.style.background = col; }
+      const n=clamp(pct,0,100);
+      battVal.textContent = String(Math.round(n));
+      battValCam.textContent = String(Math.round(n));
+      const w=`${n}%`, col = n<20?'#ef4444':(n<50?'#f59e0b':'#22c55e');
+      bfill.style.width=w; bfill.style.background=col;
+      bfillCam.style.width=w; bfillCam.style.background=col;
     }
     function updatePing(ms){
       if(!Number.isFinite(ms)) return;
-      const n = Math.max(0, Math.round(ms));
-      if(pingVal) pingVal.textContent = String(n);
-      if(pingValCam) pingValCam.textContent = String(n);
+      const n=Math.max(0,Math.round(ms));
+      pingVal.textContent=String(n); pingValCam.textContent=String(n);
     }
 
-    // ===== Mini helpers debug: tap pour simuler (facultatif) =====
-    // Double-clic sur le HUD pour faire bouger la vitesse (utile sans ESP32)
-    $("#hudFull")?.addEventListener("dblclick", ()=>{
-      const rnd = Math.random()*SPEED_MAX;
-      updateSpeed(rnd);
-    });
-
+    // Petit debug rapide : double-clic HUD => vitesse aléatoire
+    $("#hudFull")?.addEventListener("dblclick", ()=> updateSpeed(Math.random()*SPEED_MAX));
   </script>
 </body>
 </html>
