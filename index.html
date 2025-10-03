@@ -153,7 +153,7 @@
 </head>
 <body>
   <header id="appHeader">
-    <img id="logo" class="logo" src="../SAE LIBRE/IUT_UNIV_2023.png" alt="Logo université" />
+    <img id="logo" class="logo" src="iut_univ_blanc.png" alt="Logo université" />
     <div class="title">
       <h1>IHM Voiture RC - GEII</h1>
       <small id="team">Groupe 2 Voiture RC</small>
@@ -323,7 +323,7 @@
       STREAM_URL:"http://webcam.privcom.ch/mjpg/video.mjpg",
       WS_URL:"ws://adresse_ESP32/ws",
       HTTP_BASE:"http://adresse_ESP32",
-      LOGO_URL: "../SAE LIBRE/iut_univ_blanc.png ",
+      LOGO_URL: "iut_univ_blanc.png",   // <- mis à jour
       TEAM_TXT:"Groupe 2 Voiture RC"
     };
 
@@ -346,11 +346,11 @@
     // Header items (⚠️ on respecte tes valeurs par défaut)
     const logoEl=$("#logo"), teamEl=$("#team");
     logoEl.src = param("logo", DEFAULTS.LOGO_URL);
-    // Fallback automatique si le logo par défaut ne charge pas
+    // Fallback automatique si le logo ne charge pas
     logoEl.addEventListener("error", ()=>{
       if (!logoEl.dataset.fallback){
         logoEl.dataset.fallback = "1";
-        logoEl.src = "IUT_UNIV_2023.png"; // fichier à côté de index.html
+        logoEl.src = "iut_univ_blanc.png";
       }
     });
     teamEl.textContent = "Équipe : " + decodeURIComponent(param("team", encodeURIComponent(DEFAULTS.TEAM_TXT)));
