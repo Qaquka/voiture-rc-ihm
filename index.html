@@ -19,7 +19,7 @@
       display:flex; align-items:center; gap:12px; padding:10px 12px;
       background:rgba(255,255,255,.04); border-bottom:1px solid rgba(255,255,255,.08); backdrop-filter: blur(6px);
     }
-    header img.logo{ height:44px; width:auto; border-radius:8px; background:#fff; padding:4px; }
+    header img.logo{ height:44px; width:auto; border-radius:8px; background:rgba(255,255,255,.04); padding:4px; }
     .title{ display:flex; flex-direction:column; line-height:1.15; }
     .title h1{ margin:0; font-size:1.02rem; }
     .title small{ color:var(--muted); }
@@ -119,6 +119,27 @@
       padding:10px 14px; border-radius:12px;
     }
     body.mobile-mode .btn{ padding:18px 14px; font-size:1.05rem; }
+
+    /* ========= HUD (overlay vitesse / batterie / ping) ========= */
+    .hud{
+      position:absolute; inset:12px auto auto 12px; z-index:3;
+      display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+      background:rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.18);
+      color:#fff; padding:8px 10px; border-radius:12px; backdrop-filter: blur(4px);
+      font-weight:600;
+    }
+    .hud .speed, .hud .battery, .hud .rtt{
+      display:flex; align-items:baseline; gap:6px; font-variant-numeric: tabular-nums;
+    }
+    .hud .label{ font-size:.8rem; opacity:.9; }
+    .hud .val{ font-size:1.15rem; line-height:1; }
+    .hud .unit{ font-size:.85rem; opacity:.9; }
+    .hud .battbar{
+      width:46px; height:10px; border:1px solid rgba(255,255,255,.5); border-radius:3px; position:relative; overflow:hidden;
+    }
+    .hud .bfill{
+      position:absolute; inset:0 auto 0 0; width:0%; background:#22c55e; transition:width .2s ease, background .2s ease;
+    }
   </style>
 </head>
 <body>
@@ -146,6 +167,23 @@
             <span>Statut :</span><span id="wsDot" class="dot"></span><span id="wsStatus">déconnecté</span>
           </div>
           <div class="stream" id="streamFullWrap">
+            <!-- === HUD FULL === -->
+            <div class="hud" id="hudFull" aria-live="polite">
+              <div class="speed">
+                <span class="label">Vit.</span>
+                <span class="val" id="speedVal">0.0</span><span class="unit">km/h</span>
+              </div>
+              <div class="battery">
+                <span class="label">Batt.</span>
+                <div class="battbar"><div class="bfill" id="bfill"></div></div>
+                <span class="val" id="battVal">--</span><span class="unit">%</span>
+              </div>
+              <div class="rtt">
+                <span class="label">Ping</span>
+                <span class="val" id="pingVal">--</span><span class="unit">ms</span>
+              </div>
+            </div>
+            <!-- === /HUD FULL === -->
             <img id="imgFull" src="http://adresse_ESP32:81/stream" alt="Flux caméra ESP32 (MJPEG)">
             <div class="alert" id="alertFull">Flux vidéo indisponible. Vérifiez l’URL, le réseau, ou redémarrez la caméra. <button id="retryFull" class="link" style="margin-left:8px">Réessayer</button></div>
           </div>
@@ -212,6 +250,23 @@
             </div>
           </div>
           <div class="stream" id="streamCamWrap" style="margin-top:10px">
+            <!-- === HUD CAM === -->
+            <div class="hud" id="hudCam" aria-live="polite">
+              <div class="speed">
+                <span class="label">Vit.</span>
+                <span class="val" id="speedValCam">0.0</span><span class="unit">km/h</span>
+              </div>
+              <div class="battery">
+                <span class="label">Batt.</span>
+                <div class="battbar"><div class="bfill" id="bfillCam"></div></div>
+                <span class="val" id="battValCam">--</span><span class="unit">%</span>
+              </div>
+              <div class="rtt">
+                <span class="label">Ping</span>
+                <span class="val" id="pingValCam">--</span><span class="unit">ms</span>
+              </div>
+            </div>
+            <!-- === /HUD CAM === -->
             <img id="imgCam" src="http://adresse_ESP32:81/stream" alt="Flux caméra ESP32 (MJPEG)">
             <div class="alert" id="alertCam">Flux vidéo indisponible. Vérifiez l’URL, le réseau, ou redémarrez la caméra. <button id="retryCam" class="link" style="margin-left:8px">Réessayer</button></div>
           </div>
@@ -262,7 +317,7 @@
       STREAM_URL:"http://webcam.privcom.ch/mjpg/video.mjpg",
       WS_URL:"ws://adresse_ESP32/ws",
       HTTP_BASE:"http://adresse_ESP32",
-      LOGO_URL: "../SAE LIBRE/IUT_UNIV_2023.png ",
+      LOGO_URL: "../SAE LIBRE/iut_univ_blanc.png ",
       TEAM_TXT:"Groupe 2 Voiture RC"
     };
 
@@ -418,6 +473,8 @@
     httpBaseEl.value = param("http", DEFAULTS.HTTP_BASE);
 
     let ws=null;
+    let lastPingAt = null; // pour calcul RTT
+
     const setWsStatus=(open,txt,level)=>{
       wsDot.classList.remove("warn","ok");
       wsDot.classList.toggle("ok",!!open);
@@ -443,6 +500,35 @@
       ws.addEventListener("open", ()=>{ setWsStatus(true,"connecté"); notify("WebSocket connectée.", "ok"); });
       ws.addEventListener("close",()=>{ setWsStatus(false,"déconnecté"); notify("WebSocket déconnectée.", "warn"); });
       ws.addEventListener("error",()=>{ setWsStatus(false,"erreur"); notify("Erreur WebSocket (réseau / serveur).", "err"); });
+
+      // ====== HUD: réception télémétrie via WS
+      ws.addEventListener("message",(ev)=>{
+        try{
+          let payload = {};
+          // Essayer JSON
+          try{
+            const obj = JSON.parse(ev.data);
+            if(obj && typeof obj === "object") payload = obj;
+          }catch{
+            // Sinon parser des lignes texte
+            const s = String(ev.data).trim();
+            const mSpd = s.match(/^SPD\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
+            const mBat = s.match(/^BATT\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
+            const mPing= s.match(/^PING\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
+            if(mSpd) payload.speed = parseFloat(mSpd[1]);
+            if(mBat) payload.battery = parseFloat(mBat[1]);
+            if(mPing) payload.ping = parseFloat(mPing[1]);
+            if(/^PONG(?:[:\s]\d+)?$/i.test(s) && lastPingAt!=null){
+              const rtt = Math.round(performance.now() - lastPingAt);
+              updatePing(rtt);
+              lastPingAt=null;
+            }
+          }
+          if("speed" in payload)   updateSpeed(payload.speed);
+          if("battery" in payload) updateBattery(payload.battery);
+          if("ping" in payload)    updatePing(payload.ping);
+        }catch{/* ignore */}
+      });
     }
     function disconnectWS(){ try{ ws&&ws.close(); }catch{} setWsStatus(false,"déconnecté"); notify("WebSocket déconnectée.", "warn"); }
     async function sendOverHTTP(cmd){
@@ -466,7 +552,14 @@
     }
     btnConnect.addEventListener("click", connectWS);
     btnDisconnect.addEventListener("click", disconnectWS);
-    btnPing.addEventListener("click", ()=> sendCommand("PING"));
+    btnPing.addEventListener("click", ()=>{
+      if(ws && ws.readyState===WebSocket.OPEN){
+        lastPingAt = performance.now();
+        try{ ws.send("PING"); }catch{}
+      }else{
+        notify("WS non connecté : impossible de mesurer le ping (RTT).", "warn");
+      }
+    });
     btnStop.addEventListener("click", ()=> sendCommand("S"));
 
     // Keyboard control (FULL view only)
@@ -527,6 +620,37 @@
           }
         }catch{ notify("Wake Lock non supporté par ce navigateur.", "warn"); }
       });
+    }
+
+    // ====== HUD helpers (vitesse / batterie / ping) ======
+    const speedVal = $("#speedVal"), speedValCam = $("#speedValCam");
+    const battVal = $("#battVal"), battValCam = $("#battValCam");
+    const bfill = $("#bfill"), bfillCam = $("#bfillCam");
+    const pingVal = $("#pingVal"), pingValCam = $("#pingValCam");
+
+    function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+
+    function updateSpeed(v){
+      const n = Number.isFinite(v) ? v : 0;
+      const s = n.toFixed(1);
+      if(speedVal) speedVal.textContent = s;
+      if(speedValCam) speedValCam.textContent = s;
+    }
+    function updateBattery(pct){
+      if(!Number.isFinite(pct)) return;
+      const n = clamp(pct, 0, 100);
+      if(battVal) battVal.textContent = String(Math.round(n));
+      if(battValCam) battValCam.textContent = String(Math.round(n));
+      const w = `${n}%`;
+      const col = n<20?'#ef4444':(n<50?'#f59e0b':'#22c55e');
+      if(bfill){ bfill.style.width = w; bfill.style.background = col; }
+      if(bfillCam){ bfillCam.style.width = w; bfillCam.style.background = col; }
+    }
+    function updatePing(ms){
+      if(!Number.isFinite(ms)) return;
+      const n = Math.max(0, Math.round(ms));
+      if(pingVal) pingVal.textContent = String(n);
+      if(pingValCam) pingValCam.textContent = String(n);
     }
   </script>
 </body>
