@@ -50,7 +50,6 @@
     .muted{ color:var(--muted); }
     .stream{ width:100%; aspect-ratio:16/9; background:#000; border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,.08); position:relative; }
     .stream img{ width:100%; height:100%; object-fit:contain; display:block; background:#000; }
-
     .stream .alert{ position:absolute; inset:auto 8px 8px 8px; background:rgba(239,68,68,.95); color:#fff;
       border-radius:10px; padding:10px 12px; font-size:.9rem; display:none; }
     .stream.error .alert{ display:block; }
@@ -69,14 +68,10 @@
     .view{ display:none; }
     .view.active{ display:block; }
 
-    /* ========= Plein écran du CONTENEUR .stream (inclut HUD) ========= */
-    .stream:fullscreen{
-      width:100vw; height:100vh; border-radius:0; border:none; background:#000;
-    }
+    /* Plein écran stream */
+    .stream:fullscreen{ width:100vw; height:100vh; border-radius:0; border:none; background:#000; }
     .stream:fullscreen img{ width:100%; height:100%; object-fit:contain; background:#000; }
-    .stream:-webkit-full-screen{
-      width:100vw; height:100vh; border-radius:0; border:none; background:#000;
-    }
+    .stream:-webkit-full-screen{ width:100vw; height:100vh; border-radius:0; border:none; background:#000; }
     .stream:-webkit-full-screen img{ width:100%; height:100%; object-fit:contain; background:#000; }
 
     .foot{ text-align:center; padding:10px; color:var(--muted); font-size:.85rem;
@@ -98,7 +93,7 @@
     .help li{ margin: .25rem 0; }
     .help code{ background:#0b1220; border:1px solid rgba(255,255,255,.12); padding:2px 6px; border-radius:6px; }
 
-    /* ===================== MODE MOBILE (toggle) ===================== */
+    /* ===================== MODE MOBILE ===================== */
     body.mobile-mode header{ padding:8px 10px; }
     body.mobile-mode header img.logo{ height:36px; padding:3px; }
     body.mobile-mode .title h1{ font-size:.95rem; }
@@ -115,7 +110,7 @@
     body.mobile-mode .tabbtn, body-mobile-mode .modebtn, body-mobile-mode button.link{ padding:10px 14px; border-radius:12px; }
     body.mobile-mode .btn{ padding:18px 14px; font-size:1.05rem; }
 
-    /* ========= HUD (overlay) ========= */
+    /* ========= HUD ========= */
     .hud{
       position:absolute; bottom:0; left:0; right:0;
       display:flex; justify-content:center; gap:24px; align-items:center; flex-wrap:wrap;
@@ -129,25 +124,21 @@
     .hud .bfill{ position:absolute; inset:0 auto 0 0; width:0%; background:#22c55e; transition:width .2s ease, background .2s ease; }
 
     /* ---- Compteur circulaire ---- */
-    .speedometer{
-      position:relative; width:220px; height:120px; margin-right:8px;
-    }
+    .speedometer{ position:relative; width:220px; height:120px; margin-right:8px; }
     .speedometer svg{ width:100%; height:100%; display:block; }
     .needle{ transform-origin:110px 110px; transition: transform .15s ease-out; }
     .speed-digital{
       position:absolute;
-      left:16px; right:auto; bottom:10px;      /* <- décalée pour meilleure lisibilité */
+      left:18px; bottom:12px;   /* décalé pour meilleure lisibilité */
       text-align:left;
-      font-weight:800; font-size:2.4rem; letter-spacing:1px;
-      text-shadow:0 2px 6px rgba(0,0,0,.5);
+      font-weight:800; font-size:2.6rem; letter-spacing:.5px;
+      text-shadow:0 2px 6px rgba(0,0,0,.6);
     }
-    .speed-unit{
-      position:absolute; right:12px; bottom:16px; font-weight:700; opacity:.9;
-    }
+    .speed-unit{ position:absolute; right:12px; bottom:16px; font-weight:700; opacity:.9; }
     .tick{ stroke:#94a3b8; opacity:.6; }
-    .tickMajor{ stroke:#e5e7eb; opacity:.9; }
-    .arc-bg{ stroke:#3f475e; opacity:.15; }    /* <- très léger / quasiment invisible */
-    .arc-prog{ stroke:#22c55e; filter: drop-shadow(0 0 6px rgba(34,197,94,.6)); transition: stroke .2s, stroke-dashoffset .15s; }
+    .tickMajor{ stroke:#e5e7eb; opacity:.95; }
+    .arc-bg{ display:none; }               /* <- arc gris supprimé */
+    .arc-prog{ stroke:#22c55e; filter: drop-shadow(0 0 6px rgba(34,197,94,.6)); transition: stroke .15s, stroke-dasharray .15s; }
     .zone-warn{ stroke:#f59e0b; opacity:.7; }
     .zone-danger{ stroke:#ef4444; opacity:.9; }
   </style>
@@ -182,16 +173,11 @@
               <!-- Compteur vitesse -->
               <div class="speedometer" aria-label="Compteur de vitesse">
                 <svg viewBox="0 0 220 120" role="img" aria-hidden="true">
-                  <!-- arc de fond (léger) -->
                   <path d="M20,110 A90,90 0 0 1 200,110" fill="none" stroke-width="14" class="arc-bg"/>
-                  <!-- zones couleur -->
                   <path id="zoneWarn"   d="M154,92 A90,90 0 0 1 184,103" fill="none" stroke-width="14" class="zone-warn"/>
                   <path id="zoneDanger" d="M184,103 A90,90 0 0 1 200,110" fill="none" stroke-width="14" class="zone-danger"/>
-                  <!-- progression -->
                   <path id="arcProg" d="M20,110 A90,90 0 0 1 200,110" fill="none" stroke-width="14" class="arc-prog" stroke-linecap="round" stroke-dasharray="0 999"/>
-                  <!-- ticks -->
                   <g id="ticks"></g>
-                  <!-- aiguille -->
                   <g id="needle" class="needle">
                     <line x1="110" y1="110" x2="110" y2="24" stroke="#e5e7eb" stroke-width="3"/>
                     <circle cx="110" cy="110" r="6" fill="#111827" stroke="#e5e7eb" stroke-width="3"/>
@@ -201,7 +187,7 @@
                 <div class="speed-unit">KM/H</div>
               </div>
 
-              <!-- Vitesse texte (garde accessibilité) -->
+              <!-- Vitesse texte (accessibilité / debug) -->
               <div class="speed" style="display:none">
                 <span class="label">Vit.</span>
                 <span class="val" id="speedVal">0.0</span><span class="unit">km/h</span>
@@ -284,7 +270,6 @@
             </div>
           </div>
           <div class="stream" id="streamCamWrap" style="margin-top:10px">
-            <!-- === HUD CAM === -->
             <div class="hud" id="hudCam" aria-live="polite">
               <div class="speed-digital" style="position:static;font-size:2rem;margin-right:10px">
                 <span id="speedValCam">0.0</span> <span class="unit">km/h</span>
@@ -299,7 +284,6 @@
                 <span class="val" id="pingValCam">--</span><span class="unit">ms</span>
               </div>
             </div>
-            <!-- === /HUD CAM === -->
             <img id="imgCam" src="http://adresse_ESP32:81/stream" alt="Flux caméra ESP32 (MJPEG)">
             <div class="alert" id="alertCam">Flux vidéo indisponible. Vérifiez l’URL, le réseau, ou redémarrez la caméra. <button id="retryCam" class="link" style="margin-left:8px">Réessayer</button></div>
           </div>
@@ -342,11 +326,13 @@
   <div id="toast" aria-live="polite" aria-atomic="true"></div>
 
   <script>
+    // ===== Helpers & defaults =====
     const $=(s,r=document)=>r.querySelector(s);
     const qp=new URLSearchParams(location.search);
     const DEFAULTS={ STREAM_URL:"http://webcam.privcom.ch/mjpg/video.mjpg", WS_URL:"ws://adresse_ESP32/ws", HTTP_BASE:"http://adresse_ESP32", LOGO_URL:"iut_univ_blanc.png", TEAM_TXT:"Groupe 2 Voiture RC" };
     const SPEED_MAX = 25; // km/h
 
+    // Header
     const logoEl=$("#logo"), teamEl=$("#team");
     logoEl.src = qp.get("logo") || DEFAULTS.LOGO_URL;
     logoEl.addEventListener("error", ()=>{ if(!logoEl.dataset.fallback){ logoEl.dataset.fallback="1"; logoEl.src="iut_univ_blanc.png"; }});
@@ -419,7 +405,107 @@
       window.open(url, "_blank");
     });
 
-    // ---- WS + HTTP (inchangé) ----
+    // ============ Compteur vitesse ============
+    const SPEED_MAX = 25;
+    const needle = $("#needle");
+    const arcProg = $("#arcProg");
+    const speedVal = $("#speedVal");
+    const speedValBig = $("#speedValBig");
+    const speedValCam = $("#speedValCam");
+
+    // ticks (0..25)
+    (function buildTicks(){
+      const g = $("#ticks");
+      const start = -160; const end = -20; const span  = end - start;
+      for(let v=0; v<=SPEED_MAX; v++){
+        const t=v/SPEED_MAX, ang=(start+t*span)*Math.PI/180;
+        const R1 = (v%5===0)? 82 : 88, R2 = 96;
+        const x1=110+R1*Math.cos(ang), y1=110+R1*Math.sin(ang);
+        const x2=110+R2*Math.cos(ang), y2=110+R2*Math.sin(ang);
+        const ln=document.createElementNS("http://www.w3.org/2000/svg","line");
+        ln.setAttribute("x1",x1.toFixed(1)); ln.setAttribute("y1",y1.toFixed(1));
+        ln.setAttribute("x2",x2.toFixed(1)); ln.setAttribute("y2",y2.toFixed(1));
+        ln.setAttribute("class",(v%5===0)?"tickMajor":"tick"); ln.setAttribute("stroke-width",(v%5===0)?2:1);
+        g.appendChild(ln);
+        if(v%5===0){
+          const tx=110+70*Math.cos(ang), ty=110+70*Math.sin(ang)+4;
+          const text=document.createElementNS("http://www.w3.org/2000/svg","text");
+          text.setAttribute("x",tx.toFixed(1)); text.setAttribute("y",ty.toFixed(1));
+          text.setAttribute("fill","#e5e7eb"); text.setAttribute("font-size","10"); text.setAttribute("text-anchor","middle");
+          text.textContent=v; g.appendChild(text);
+        }
+      }
+      const arcLen = Math.PI*90;
+      arcProg.setAttribute("stroke-dasharray", `${arcLen} 999`);
+      arcProg.dataset.arcLen = arcLen;
+    })();
+
+    function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
+
+    function setNeedleBySpeed(v){
+      const vC = clamp(v,0,SPEED_MAX);
+      const ang = -160 + (vC / SPEED_MAX) * 140;
+      needle.style.transform = `rotate(${ang+180}deg)`;
+      const arcLen = parseFloat(arcProg.dataset.arcLen || "282.7");
+      const dash = (vC/SPEED_MAX) * arcLen;
+      arcProg.setAttribute("stroke-dasharray", `${dash} 999`);
+      if (vC >= SPEED_MAX*0.88)      arcProg.setAttribute("stroke", "#ef4444");
+      else if (vC >= SPEED_MAX*0.60) arcProg.setAttribute("stroke", "#f59e0b");
+      else                            arcProg.setAttribute("stroke", "#22c55e");
+    }
+
+    // animation aiguille ~250ms ; nombre MAJ immédiat
+    let animId=null, currentSpeed=0;
+    function updateSpeed(target){
+      target = clamp(Number(target)||0, 0, SPEED_MAX);
+
+      // 1) mettre à jour le NUMÉRIQUE tout de suite (plus d'effet "06")
+      const num = Math.round(target);
+      if (speedValBig) speedValBig.textContent = String(num);
+      if (speedVal)    speedVal.textContent    = target.toFixed(1);
+      if (speedValCam) speedValCam.textContent = target.toFixed(1);
+
+      // 2) animer l'aiguille vers la cible
+      if (animId) cancelAnimationFrame(animId);
+      const start = currentSpeed;
+      const delta = target - start;
+      const dur = 250; // ms
+      const t0 = performance.now();
+
+      (function anim(now){
+        const t = Math.min(1, (now - t0)/dur);
+        // easeOutCubic
+        const e = 1 - Math.pow(1 - t, 3);
+        const v = start + delta * e;
+        setNeedleBySpeed(v);
+        if (t < 1){ animId = requestAnimationFrame(anim); }
+        else { currentSpeed = target; animId = null; }
+      })(t0);
+    }
+
+    // Batterie / Ping
+    const battVal=$("#battVal"), battValCam=$("#battValCam");
+    const bfill=$("#bfill"), bfillCam=$("#bfillCam");
+    const pingVal=$("#pingVal"), pingValCam=$("#pingValCam");
+    function updateBattery(pct){
+      if(!Number.isFinite(pct)) return;
+      const n=clamp(pct,0,100);
+      battVal.textContent = String(Math.round(n));
+      battValCam.textContent = String(Math.round(n));
+      const w=`${n}%`, col = n<20?'#ef4444':(n<50?'#f59e0b':'#22c55e');
+      bfill.style.width=w; bfill.style.background=col;
+      bfillCam.style.width=w; bfillCam.style.background=col;
+    }
+    function updatePing(ms){
+      if(!Number.isFinite(ms)) return;
+      const n=Math.max(0,Math.round(ms));
+      pingVal.textContent=String(n); pingValCam.textContent=String(n);
+    }
+
+    // Double-clic HUD → test rapide
+    $("#hudFull")?.addEventListener("dblclick", ()=> updateSpeed(Math.random()*SPEED_MAX));
+
+    // ====== (WS + HTTP identiques à avant ; omis ici pour compacité) ======
     const wsUrlEl=$("#wsUrl"), httpBaseEl=$("#httpBase");
     const btnConnect=$("#btnConnect"), btnDisconnect=$("#btnDisconnect");
     const btnPing=$("#btnPing"), btnStop=$("#btnStop");
@@ -427,14 +513,7 @@
     wsUrlEl.value = qp.get("ws") || DEFAULTS.WS_URL;
     httpBaseEl.value = qp.get("http") || DEFAULTS.HTTP_BASE;
     let ws=null, lastPingAt=null;
-
-    const setWsStatus=(open,txt,level)=>{
-      wsDot.classList.remove("warn","ok");
-      wsDot.classList.toggle("ok",!!open);
-      if(level==="warn") wsDot.classList.add("warn");
-      wsStatus.textContent=txt || (open?"connecté":"déconnecté");
-    };
-
+    const setWsStatus=(open,txt,level)=>{ wsDot.classList.remove("warn","ok"); wsDot.classList.toggle("ok",!!open); if(level==="warn") wsDot.classList.add("warn"); wsStatus.textContent=txt || (open?"connecté":"déconnecté"); };
     function connectWS(){
       const url=wsUrlEl.value.trim();
       if(!/^wss?:\/\//i.test(url)) return;
@@ -479,7 +558,7 @@
     btnPing.addEventListener("click", ()=>{ if(ws&&ws.readyState===WebSocket.OPEN){ lastPingAt=performance.now(); try{ ws.send("PING"); }catch{} }});
     btnStop.addEventListener("click", ()=> sendCommand("S"));
 
-    // Clavier
+    // clavier
     const pressed=new Set();
     const KeyMap={"ArrowUp":"F","KeyZ":"F","ArrowDown":"B","KeyS":"B","ArrowLeft":"L","KeyQ":"L","ArrowRight":"R","KeyD":"R","Space":"S"};
     function handleKey(code, down){ if(!(code in KeyMap)) return; const cmd=KeyMap[code]; if(cmd==="S"){ sendCommand("S"); return; } if(down){ sendCommand(cmd); } else { sendCommand("S"); } }
@@ -488,99 +567,13 @@
     window.addEventListener("blur", ()=> sendCommand("S"));
     document.addEventListener("visibilitychange", ()=>{ if(document.hidden) sendCommand("S"); });
 
-    // Plein écran + Wake Lock
+    // Plein écran + wakelock
     const btnFS=$("#btnFS"), btnReload=$("#btnReload");
     function requestFullscreenOn(el){ if(!el) return; if (el.requestFullscreen) { el.requestFullscreen().catch(()=>{}); return; } if (el.webkitRequestFullscreen) { try{ el.webkitRequestFullscreen(); }catch{} } }
     btnFS?.addEventListener("click", ()=>{ requestFullscreenOn(document.getElementById("streamCamWrap")); enableWakeLock(); });
     btnReload?.addEventListener("click", ()=> reloadImg(imgCam));
     let wakeLock=null; async function enableWakeLock(){ try{ if(!wakeLock){ wakeLock = await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release", ()=>{ wakeLock=null; }); } }catch{} }
     async function attemptVideoFullscreen(){ const wrap=document.getElementById("streamCamWrap"); if(!wrap) return; try{ if(document.fullscreenElement !== wrap){ if (wrap.requestFullscreen) await wrap.requestFullscreen(); else if (wrap.webkitRequestFullscreen) wrap.webkitRequestFullscreen(); } }catch{} enableWakeLock(); }
-
-    /* ===== Compteur vitesse ===== */
-    const needle = $("#needle");
-    const arcProg = $("#arcProg");
-    const speedVal = $("#speedVal");
-    const speedValBig = $("#speedValBig");
-    const speedValCam = $("#speedValCam");
-
-    // Ticks 0..25
-    (function buildTicks(){
-      const g = $("#ticks");
-      const start = -160; const end = -20; const span  = end - start;
-      for(let v=0; v<=SPEED_MAX; v++){
-        const t=v/SPEED_MAX, ang=(start+t*span)*Math.PI/180;
-        const R1 = (v%5===0)? 82 : 88, R2 = 96;
-        const x1=110+R1*Math.cos(ang), y1=110+R1*Math.sin(ang);
-        const x2=110+R2*Math.cos(ang), y2=110+R2*Math.sin(ang);
-        const ln=document.createElementNS("http://www.w3.org/2000/svg","line");
-        ln.setAttribute("x1",x1.toFixed(1)); ln.setAttribute("y1",y1.toFixed(1));
-        ln.setAttribute("x2",x2.toFixed(1)); ln.setAttribute("y2",y2.toFixed(1));
-        ln.setAttribute("class",(v%5===0)?"tickMajor":"tick"); ln.setAttribute("stroke-width",(v%5===0)?2:1);
-        g.appendChild(ln);
-        if(v%5===0){
-          const tx=110+70*Math.cos(ang), ty=110+70*Math.sin(ang)+4;
-          const text=document.createElementNS("http://www.w3.org/2000/svg","text");
-          text.setAttribute("x",tx.toFixed(1)); text.setAttribute("y",ty.toFixed(1));
-          text.setAttribute("fill","#e5e7eb"); text.setAttribute("font-size","10"); text.setAttribute("text-anchor","middle");
-          text.textContent=v; g.appendChild(text);
-        }
-      }
-      const arcLen = Math.PI*90; // demi-cercle de rayon 90
-      arcProg.setAttribute("stroke-dasharray", `${arcLen} 999`);
-      arcProg.dataset.arcLen = arcLen;
-    })();
-
-    let _speedDisplay = 0; // km/h lissé
-    function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
-    function setNeedleBySpeed(v){
-      const vC = clamp(v,0,SPEED_MAX);
-      const ang = -160 + (vC / SPEED_MAX) * 140;
-      needle.style.transform = `rotate(${ang+180}deg)`;
-      const arcLen = parseFloat(arcProg.dataset.arcLen || "282.7");
-      const dash = (vC/SPEED_MAX) * arcLen;
-      arcProg.setAttribute("stroke-dasharray", `${dash} 999`);
-      if (vC >= SPEED_MAX*0.88)      arcProg.setAttribute("stroke", "#ef4444");
-      else if (vC >= SPEED_MAX*0.60) arcProg.setAttribute("stroke", "#f59e0b");
-      else                            arcProg.setAttribute("stroke", "#22c55e");
-    }
-    function smoothTo(target){
-      const alpha = 0.25;
-      _speedDisplay = _speedDisplay + alpha * (target - _speedDisplay);
-      setNeedleBySpeed(_speedDisplay);
-      // numérique = valeur cible immédiate (pas lissée) pour éviter le 06 en transition
-      const txt = Math.round(clamp(target,0,SPEED_MAX));
-      if(speedValBig) speedValBig.textContent = txt.toString().padStart(2,'0');
-      if(speedVal)    speedVal.textContent    = clamp(target,0,SPEED_MAX).toFixed(1);
-      if(speedValCam) speedValCam.textContent = clamp(target,0,SPEED_MAX).toFixed(1);
-    }
-    function updateSpeed(v){
-      const n = Number.isFinite(v) ? v : 0;
-      const frames = 6;
-      let i=0; const start = _speedDisplay, delta = (clamp(n,0,SPEED_MAX) - start);
-      (function anim(){ i++; smoothTo(start + delta*(i/frames)); if(i<frames) requestAnimationFrame(anim); })();
-    }
-
-    // Batterie / Ping
-    const battVal=$("#battVal"), battValCam=$("#battValCam");
-    const bfill=$("#bfill"), bfillCam=$("#bfillCam");
-    const pingVal=$("#pingVal"), pingValCam=$("#pingValCam");
-    function updateBattery(pct){
-      if(!Number.isFinite(pct)) return;
-      const n=clamp(pct,0,100);
-      battVal.textContent = String(Math.round(n));
-      battValCam.textContent = String(Math.round(n));
-      const w=`${n}%`, col = n<20?'#ef4444':(n<50?'#f59e0b':'#22c55e');
-      bfill.style.width=w; bfill.style.background=col;
-      bfillCam.style.width=w; bfillCam.style.background=col;
-    }
-    function updatePing(ms){
-      if(!Number.isFinite(ms)) return;
-      const n=Math.max(0,Math.round(ms));
-      pingVal.textContent=String(n); pingValCam.textContent=String(n);
-    }
-
-    // Petit debug rapide : double-clic HUD => vitesse aléatoire
-    $("#hudFull")?.addEventListener("dblclick", ()=> updateSpeed(Math.random()*SPEED_MAX));
   </script>
 </body>
 </html>
