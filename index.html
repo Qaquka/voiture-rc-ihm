@@ -68,20 +68,14 @@
     .view{ display:none; }
     .view.active{ display:block; }
 
-    /* ========= Plein écran du CONTENEUR .stream (inclut HUD) ========= */
-    /* Standard */
-    .stream:fullscreen{
-      width:100vw; height:100vh; border-radius:0; border:none;
-      background:#000;
-    }
-    .stream:fullscreen img{
-      width:100%; height:100%; object-fit:contain; background:#000;
-    }
-    /* WebKit */
+    /* Cam-only view: allow video element to be fullscreen (garde aussi le conteneur) */
+    #view-cam .stream{ aspect-ratio:auto; height: calc(100vh - 160px); }
+    /* Plein écran du CONTENEUR .stream (standard + WebKit) pour garder le HUD */
+    .stream:fullscreen,
     .stream:-webkit-full-screen{
-      width:100vw; height:100vh; border-radius:0; border:none;
-      background:#000;
+      width:100vw; height:100vh; border-radius:0; border:none; background:#000;
     }
+    .stream:fullscreen img,
     .stream:-webkit-full-screen img{
       width:100%; height:100%; object-fit:contain; background:#000;
     }
@@ -134,11 +128,18 @@
 
     /* ========= HUD (overlay vitesse / batterie / ping) ========= */
     .hud{
-      position:absolute; inset:12px auto auto 12px; z-index:3;
+      position:absolute;
+      left:50%; bottom:12px; top:auto; right:auto;
+      transform: translateX(-50%);
+      z-index:3;
       display:flex; align-items:center; gap:12px; flex-wrap:wrap;
       background:rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.18);
       color:#fff; padding:8px 10px; border-radius:12px; backdrop-filter: blur(4px);
       font-weight:600;
+    }
+    @supports (padding: max(0px)) {
+      /* pour les encoches iOS */
+      .hud{ margin-bottom: env(safe-area-inset-bottom); }
     }
     .hud .speed, .hud .battery, .hud .rtt{
       display:flex; align-items:baseline; gap:6px; font-variant-numeric: tabular-nums;
@@ -204,7 +205,6 @@
             <button id="applyStream" class="link primary">Appliquer</button>
             <button id="reloadStream" class="link">Recharger</button>
             <button id="disconnectStream" class="link danger">Déconnecter le flux</button>
-            <button id="btnFSFull" class="link">Plein écran (HUD)</button>
             <button id="openCamOnly" class="link">Ouvrir la vue caméra seule (nouvel onglet)</button>
           </div>
           <div class="meta" style="margin-top:8px">
@@ -229,17 +229,14 @@
           </div>
 
           <div class="controls" aria-label="Boutons de direction">
-            <!-- Ligne 1 : [vide]   [Z]   [vide] -->
             <div></div>
             <div class="btn" data-dir="forward" aria-label="Avancer (↑ / Z)">↑ / Z</div>
             <div></div>
 
-            <!-- Ligne 2 : [Q]   [S]   [D] -->
             <div class="btn" data-dir="left" aria-label="Gauche (← / Q)">← / Q</div>
             <div class="btn" data-dir="backward" aria-label="Reculer (↓ / S)">↓ / S</div>
             <div class="btn" data-dir="right" aria-label="Droite (→ / D)">→ / D</div>
 
-            <!-- Ligne 3 : [vide]  [STOP]  [vide] -->
             <div></div>
             <div class="btn" data-dir="stop" aria-label="Stop (Espace)">STOP</div>
             <div></div>
@@ -291,7 +288,7 @@
             <button id="disconnectStreamCam" class="link danger">Déconnecter le flux</button>
           </div>
         </div>
-        <div class="foot">Astuce : tournez le téléphone en paysage pour une meilleure visibilité. Le plein écran est demandé uniquement pour l’élément vidéo.</div>
+        <div class="foot">Astuce : tournez le téléphone en paysage pour une meilleure visibilité. Le plein écran est demandé sur le conteneur pour garder l’overlay.</div>
       </div>
     </section>
 
@@ -367,7 +364,7 @@
       tabCam.classList.toggle("active", isCam);
       tabHelp.classList.toggle("active", isHelp);
       const url=new URL(location.href); url.searchParams.set("view", v); history.replaceState(null,"",url);
-      if(isCam){ attemptVideoFullscreen(); } // en cam, on demande plein écran du conteneur
+      if(isCam){ attemptVideoFullscreen(); }
     }
     setView(param("view","full"));
     tabFull.addEventListener("click", ()=>setView("full"));
@@ -380,11 +377,13 @@
       const isMobile = (mode === "mobile");
       document.body.classList.toggle("mobile-mode", isMobile);
       btnMode.textContent = isMobile ? "Mode desktop" : "Mode mobile";
+      // Persiste dans l’URL et localStorage
       const url=new URL(location.href);
       url.searchParams.set("mode", isMobile ? "mobile" : "desktop");
       history.replaceState(null,"",url);
       try{ localStorage.setItem("uiMode", isMobile ? "mobile":"desktop"); }catch{}
     }
+    // Charger depuis ?mode= ou localStorage
     (function initMode(){
       const fromQP = qp.get("mode");
       if(fromQP){ setUIMode(fromQP); return; }
@@ -407,7 +406,6 @@
     const retryFull=$("#retryFull"), retryCam=$("#retryCam");
     const btnDisconnectStream = $("#disconnectStream");
     const btnDisconnectStreamCam = $("#disconnectStreamCam");
-    const btnFSFull = $("#btnFSFull"); // nouveau
 
     const streamDefault = param("stream", DEFAULTS.STREAM_URL);
     setStream(streamDefault);
@@ -485,7 +483,7 @@
     httpBaseEl.value = param("http", DEFAULTS.HTTP_BASE);
 
     let ws=null;
-    let lastPingAt = null;
+    let lastPingAt = null; // pour calcul RTT
 
     const setWsStatus=(open,txt,level)=>{
       wsDot.classList.remove("warn","ok");
@@ -517,10 +515,12 @@
       ws.addEventListener("message",(ev)=>{
         try{
           let payload = {};
+          // Essayer JSON
           try{
             const obj = JSON.parse(ev.data);
             if(obj && typeof obj === "object") payload = obj;
           }catch{
+            // Sinon parser des lignes texte
             const s = String(ev.data).trim();
             const mSpd = s.match(/^SPD\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
             const mBat = s.match(/^BATT\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
@@ -537,7 +537,7 @@
           if("speed" in payload)   updateSpeed(payload.speed);
           if("battery" in payload) updateBattery(payload.battery);
           if("ping" in payload)    updatePing(payload.ping);
-        }catch{}
+        }catch{/* ignore */}
       });
     }
     function disconnectWS(){ try{ ws&&ws.close(); }catch{} setWsStatus(false,"déconnecté"); notify("WebSocket déconnectée.", "warn"); }
@@ -594,54 +594,47 @@
     window.addEventListener("blur", ()=> sendCommand("S"));
     document.addEventListener("visibilitychange", ()=>{ if(document.hidden) sendCommand("S"); });
 
-    // ===== Plein écran CONTAINER (pour garder HUD) + Wake Lock
+    // Cam-only tools: Plein écran sur le CONTENEUR + Wake Lock
     const btnFS=$("#btnFS"), btnWake=$("#btnWake"), btnReload=$("#btnReload");
-    function requestFullscreenOn(el){
-      if(!el) return;
-      try{ el.requestFullscreen?.(); }
-      catch{}
-      // WebKit fallback
-      try{ el.webkitRequestFullscreen?.(); }catch{}
-    }
-    // Caméra seule
     if(btnFS){
-      btnFS.addEventListener("click", ()=>{
-        requestFullscreenOn(document.getElementById("streamCamWrap"));
-        enableWakeLock();
-      });
-    }
-    // Vue complète
-    if(btnFSFull){
-      btnFSFull.addEventListener("click", ()=>{
-        requestFullscreenOn(document.getElementById("streamFullWrap"));
+      btnFS.addEventListener("click", async ()=>{
+        await attemptVideoFullscreen(true);
       });
     }
     if(btnReload){ btnReload.addEventListener("click", ()=> reloadImg(imgCam)); }
 
     let wakeLock=null;
-    async function enableWakeLock(){
+    async function attemptVideoFullscreen(fromButton=false){
+      try{
+        const wrap = document.getElementById("streamCamWrap");
+        if(wrap && document.fullscreenElement !== wrap){
+          if(wrap.requestFullscreen) await wrap.requestFullscreen();
+          else if(wrap.webkitRequestFullscreen) wrap.webkitRequestFullscreen(); // iOS
+          if(!fromButton) notify("Plein écran demandé (avec HUD).", "ok");
+        }
+      }catch{}
       try{
         if(!wakeLock){
           wakeLock = await navigator.wakeLock.request("screen");
-          notify("Anti-veille activé (si supporté).", "ok");
+          if(!fromButton) notify("Anti-veille activé (si supporté).", "ok");
           wakeLock.addEventListener("release", ()=>{ wakeLock=null; notify("Anti-veille relâché.", "warn"); });
         }
-      }catch{/* non supporté */}
-    }
-    async function attemptVideoFullscreen(fromButton=false){
-      // On met le conteneur cam en plein écran pour garder l’overlay
-      const wrap = document.getElementById("streamCamWrap");
-      if(!wrap) return;
-      try{
-        if(document.fullscreenElement !== wrap){
-          await wrap.requestFullscreen?.();
-          if(!fromButton) notify("Plein écran (HUD) demandé.", "ok");
-        }
       }catch{}
-      enableWakeLock();
+    }
+    if(btnWake){
+      btnWake.addEventListener("click", async ()=>{
+        try{
+          if(!wakeLock){
+            wakeLock = await navigator.wakeLock.request("screen");
+            notify("Anti-veille activé.", "ok");
+          }else{
+            await wakeLock.release(); wakeLock=null; notify("Anti-veille désactivé.", "warn");
+          }
+        }catch{ notify("Wake Lock non supporté par ce navigateur.", "warn"); }
+      });
     }
 
-    // ====== HUD helpers (vitesse / batterie / ping)
+    // ====== HUD helpers (vitesse / batterie / ping) ======
     const speedVal = $("#speedVal"), speedValCam = $("#speedValCam");
     const battVal = $("#battVal"), battValCam = $("#battValCam");
     const bfill = $("#bfill"), bfillCam = $("#bfillCam");
