@@ -346,6 +346,13 @@
     // Header items (⚠️ on respecte tes valeurs par défaut)
     const logoEl=$("#logo"), teamEl=$("#team");
     logoEl.src = param("logo", DEFAULTS.LOGO_URL);
+    // Fallback automatique si le logo par défaut ne charge pas
+    logoEl.addEventListener("error", ()=>{
+      if (!logoEl.dataset.fallback){
+        logoEl.dataset.fallback = "1";
+        logoEl.src = "IUT_UNIV_2023.png"; // fichier à côté de index.html
+      }
+    });
     teamEl.textContent = "Équipe : " + decodeURIComponent(param("team", encodeURIComponent(DEFAULTS.TEAM_TXT)));
 
     // Tabs
