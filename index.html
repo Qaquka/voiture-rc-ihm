@@ -68,7 +68,7 @@
     .view{ display:none; }
     .view.active{ display:block; }
 
-    /* Plein écran stream */
+    /* Plein écran conteneur */
     .stream:fullscreen{ width:100vw; height:100vh; border-radius:0; border:none; background:#000; }
     .stream:fullscreen img{ width:100%; height:100%; object-fit:contain; background:#000; }
     .stream:-webkit-full-screen{ width:100vw; height:100vh; border-radius:0; border:none; background:#000; }
@@ -88,12 +88,7 @@
     .toast.err{ background: rgba(239,68,68,.95); }
     .toast button{ background: rgba(255,255,255,.15); border: none; color: #fff; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
 
-    /* Help styles */
-    .help ul{ margin: .2rem 0 .2rem 1.1rem; }
-    .help li{ margin: .25rem 0; }
-    .help code{ background:#0b1220; border:1px solid rgba(255,255,255,.12); padding:2px 6px; border-radius:6px; }
-
-    /* ===================== MODE MOBILE ===================== */
+    /* MODE MOBILE */
     body.mobile-mode header{ padding:8px 10px; }
     body.mobile-mode header img.logo{ height:36px; padding:3px; }
     body.mobile-mode .title h1{ font-size:.95rem; }
@@ -107,40 +102,33 @@
     body.mobile-mode #view-cam .row input[type="text"]{ display:none; }
     body.mobile-mode #view-full .stream{ aspect-ratio:auto; height: calc(100vh - 260px); }
     body.mobile-mode #view-cam .stream{ height: calc(100vh - 160px); }
-    body.mobile-mode .tabbtn, body-mobile-mode .modebtn, body-mobile-mode button.link{ padding:10px 14px; border-radius:12px; }
+    body.mobile-mode .tabbtn, body.mobile-mode .modebtn, body.mobile-mode button.link{ padding:10px 14px; border-radius:12px; }
     body.mobile-mode .btn{ padding:18px 14px; font-size:1.05rem; }
 
-    /* ========= HUD ========= */
+    /* ========= HUD (overlay) ========= */
     .hud{
       position:absolute; bottom:0; left:0; right:0;
-      display:flex; justify-content:center; gap:24px; align-items:center; flex-wrap:wrap;
+      display:flex; justify-content:center; gap:28px; align-items:center; flex-wrap:wrap;
       background:rgba(0,0,0,.45); border-top:1px solid rgba(255,255,255,.18);
-      color:#fff; padding:10px 12px; font-weight:600; z-index:3;
+      color:#fff; padding:10px 14px; font-weight:700; z-index:3;
     }
-    .hud .label{ font-size:.8rem; opacity:.9; }
+    .hud .label{ font-size:.85rem; opacity:.9; }
     .hud .val{ font-size:1.15rem; line-height:1; }
-    .hud .unit{ font-size:.85rem; opacity:.9; }
-    .hud .battbar{ width:46px; height:10px; border:1px solid rgba(255,255,255,.5); border-radius:3px; position:relative; overflow:hidden; }
-    .hud .bfill{ position:absolute; inset:0 auto 0 0; width:0%; background:#22c55e; transition:width .2s ease, background .2s ease; }
+    .hud .unit{ font-size:.9rem; opacity:.9; }
 
-    /* ---- Compteur circulaire ---- */
-    .speedometer{ position:relative; width:220px; height:120px; margin-right:8px; }
-    .speedometer svg{ width:100%; height:100%; display:block; }
-    .needle{ transform-origin:110px 110px; transition: transform .15s ease-out; }
-    .speed-digital{
-      position:absolute;
-      left:18px; bottom:12px;   /* décalé pour meilleure lisibilité */
-      text-align:left;
-      font-weight:800; font-size:2.6rem; letter-spacing:.5px;
+    /* Vitesse numérique GROS */
+    .speedBig{
+      display:flex; align-items:baseline; gap:10px;
+      font-size:3rem; line-height:1; letter-spacing:1px;
       text-shadow:0 2px 6px rgba(0,0,0,.6);
+      min-width:150px; justify-content:center;
     }
-    .speed-unit{ position:absolute; right:12px; bottom:16px; font-weight:700; opacity:.9; }
-    .tick{ stroke:#94a3b8; opacity:.6; }
-    .tickMajor{ stroke:#e5e7eb; opacity:.95; }
-    .arc-bg{ display:none; }               /* <- arc gris supprimé */
-    .arc-prog{ stroke:#22c55e; filter: drop-shadow(0 0 6px rgba(34,197,94,.6)); transition: stroke .15s, stroke-dasharray .15s; }
-    .zone-warn{ stroke:#f59e0b; opacity:.7; }
-    .zone-danger{ stroke:#ef4444; opacity:.9; }
+    .speedBig .num{ font-size:3.2rem; font-variant-numeric: tabular-nums; }
+    .speedBig .unit{ font-size:1rem; opacity:.9; margin-bottom:4px; }
+
+    /* Batterie barre */
+    .battbar{ width:56px; height:10px; border:1px solid rgba(255,255,255,.55); border-radius:3px; position:relative; overflow:hidden; margin:0 6px; }
+    .bfill{ position:absolute; inset:0 auto 0 0; width:0%; background:#22c55e; transition:width .2s ease, background .2s ease; }
   </style>
 </head>
 <body>
@@ -170,27 +158,10 @@
           <div class="stream" id="streamFullWrap">
             <!-- === HUD FULL === -->
             <div class="hud" id="hudFull" aria-live="polite">
-              <!-- Compteur vitesse -->
-              <div class="speedometer" aria-label="Compteur de vitesse">
-                <svg viewBox="0 0 220 120" role="img" aria-hidden="true">
-                  <path d="M20,110 A90,90 0 0 1 200,110" fill="none" stroke-width="14" class="arc-bg"/>
-                  <path id="zoneWarn"   d="M154,92 A90,90 0 0 1 184,103" fill="none" stroke-width="14" class="zone-warn"/>
-                  <path id="zoneDanger" d="M184,103 A90,90 0 0 1 200,110" fill="none" stroke-width="14" class="zone-danger"/>
-                  <path id="arcProg" d="M20,110 A90,90 0 0 1 200,110" fill="none" stroke-width="14" class="arc-prog" stroke-linecap="round" stroke-dasharray="0 999"/>
-                  <g id="ticks"></g>
-                  <g id="needle" class="needle">
-                    <line x1="110" y1="110" x2="110" y2="24" stroke="#e5e7eb" stroke-width="3"/>
-                    <circle cx="110" cy="110" r="6" fill="#111827" stroke="#e5e7eb" stroke-width="3"/>
-                  </g>
-                </svg>
-                <div class="speed-digital"><span id="speedValBig">0</span></div>
-                <div class="speed-unit">KM/H</div>
-              </div>
-
-              <!-- Vitesse texte (accessibilité / debug) -->
-              <div class="speed" style="display:none">
-                <span class="label">Vit.</span>
-                <span class="val" id="speedVal">0.0</span><span class="unit">km/h</span>
+              <!-- Vitesse numérique BIG -->
+              <div class="speedBig" aria-label="Vitesse actuelle">
+                <span class="num" id="speedValBig">0</span>
+                <span class="unit">KM/H</span>
               </div>
 
               <!-- Batterie -->
@@ -270,9 +241,11 @@
             </div>
           </div>
           <div class="stream" id="streamCamWrap" style="margin-top:10px">
+            <!-- === HUD CAM === -->
             <div class="hud" id="hudCam" aria-live="polite">
-              <div class="speed-digital" style="position:static;font-size:2rem;margin-right:10px">
-                <span id="speedValCam">0.0</span> <span class="unit">km/h</span>
+              <div style="display:flex;align-items:baseline;gap:6px;font-weight:800;">
+                <span id="speedValCam" style="font-size:2rem;line-height:1;font-variant-numeric:tabular-nums">0.0</span>
+                <span class="unit">km/h</span>
               </div>
               <div class="battery">
                 <span class="label">Batt.</span>
@@ -284,6 +257,7 @@
                 <span class="val" id="pingValCam">--</span><span class="unit">ms</span>
               </div>
             </div>
+            <!-- === /HUD CAM === -->
             <img id="imgCam" src="http://adresse_ESP32:81/stream" alt="Flux caméra ESP32 (MJPEG)">
             <div class="alert" id="alertCam">Flux vidéo indisponible. Vérifiez l’URL, le réseau, ou redémarrez la caméra. <button id="retryCam" class="link" style="margin-left:8px">Réessayer</button></div>
           </div>
@@ -328,48 +302,82 @@
   <script>
     // ===== Helpers & defaults =====
     const $=(s,r=document)=>r.querySelector(s);
+    const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
     const qp=new URLSearchParams(location.search);
-    const DEFAULTS={ STREAM_URL:"http://webcam.privcom.ch/mjpg/video.mjpg", WS_URL:"ws://adresse_ESP32/ws", HTTP_BASE:"http://adresse_ESP32", LOGO_URL:"iut_univ_blanc.png", TEAM_TXT:"Groupe 2 Voiture RC" };
-    const SPEED_MAX = 25; // km/h
+    const DEFAULTS={
+      STREAM_URL:"http://webcam.privcom.ch/mjpg/video.mjpg",
+      WS_URL:"ws://adresse_ESP32/ws",
+      HTTP_BASE:"http://adresse_ESP32",
+      LOGO_URL: "iut_univ_blanc.png",
+      TEAM_TXT:"Groupe 2 Voiture RC"
+    };
+
+    function notify(msg, level="err", actions=[]){
+      const wrap=$("#toast");
+      const el=document.createElement("div");
+      el.className=`toast ${level}`;
+      const btns = actions.map(a=>`<button data-act="${a.id||'act'}">${a.label}</button>`).join("");
+      el.innerHTML=`<span>${msg}</span><span>${btns}</span>`;
+      wrap.appendChild(el);
+      actions.forEach(a=>{
+        const b = el.querySelector(`button[data-act="${a.id||'act'}"]`);
+        if(b) b.addEventListener("click", ()=>{ try{ a.onClick?.(); }catch{}; el.remove(); });
+      });
+      setTimeout(()=>{ try{ el.remove(); }catch{}; }, 4000);
+    }
+
+    const param = (key, fallback)=> qp.get(key) || fallback;
 
     // Header
     const logoEl=$("#logo"), teamEl=$("#team");
-    logoEl.src = qp.get("logo") || DEFAULTS.LOGO_URL;
+    logoEl.src = param("logo", DEFAULTS.LOGO_URL);
     logoEl.addEventListener("error", ()=>{ if(!logoEl.dataset.fallback){ logoEl.dataset.fallback="1"; logoEl.src="iut_univ_blanc.png"; }});
-    teamEl.textContent = "Équipe : " + decodeURIComponent(qp.get("team") || encodeURIComponent(DEFAULTS.TEAM_TXT));
+    teamEl.textContent = "Équipe : " + decodeURIComponent(param("team", encodeURIComponent(DEFAULTS.TEAM_TXT)));
 
-    // Views
+    // Tabs
+    const tabFull=$("#tabFull"), tabCam=$("#tabCam"), tabHelp=$("#tabHelp");
     const viewFull=$("#view-full"), viewCam=$("#view-cam"), viewHelp=$("#view-help");
     function setView(v){
       const isFull = v==="full", isCam = v==="cam", isHelp = v==="help";
       viewFull.classList.toggle("active", isFull);
       viewCam.classList.toggle("active", isCam);
       viewHelp.classList.toggle("active", isHelp);
+      tabFull.classList.toggle("active", isFull);
+      tabCam.classList.toggle("active", isCam);
+      tabHelp.classList.toggle("active", isHelp);
       const url=new URL(location.href); url.searchParams.set("view", v); history.replaceState(null,"",url);
       if(isCam){ attemptVideoFullscreen(); }
     }
-    setView(qp.get("view") || "full");
-    $("#tabFull").addEventListener("click", ()=>setView("full"));
-    $("#tabCam").addEventListener("click",  ()=>setView("cam"));
-    $("#tabHelp").addEventListener("click", ()=>setView("help"));
+    setView(param("view","full"));
+    tabFull.addEventListener("click", ()=>setView("full"));
+    tabCam.addEventListener("click",  ()=>setView("cam"));
+    tabHelp.addEventListener("click", ()=>setView("help"));
 
-    // Mode UI
-    const btnMode=$("#btnMode");
+    // ===== Mode UI
+    const btnMode = $("#btnMode");
     function setUIMode(mode){
       const isMobile = (mode === "mobile");
       document.body.classList.toggle("mobile-mode", isMobile);
       btnMode.textContent = isMobile ? "Mode desktop" : "Mode mobile";
-      const url=new URL(location.href); url.searchParams.set("mode", isMobile ? "mobile" : "desktop"); history.replaceState(null,"",url);
+      const url=new URL(location.href);
+      url.searchParams.set("mode", isMobile ? "mobile" : "desktop");
+      history.replaceState(null,"",url);
       try{ localStorage.setItem("uiMode", isMobile ? "mobile":"desktop"); }catch{}
     }
     (function initMode(){
       const fromQP = qp.get("mode");
       if(fromQP){ setUIMode(fromQP); return; }
-      try{ const saved = localStorage.getItem("uiMode"); if(saved) setUIMode(saved); }catch{}
+      try{
+        const saved = localStorage.getItem("uiMode");
+        if(saved) setUIMode(saved);
+      }catch{}
     })();
-    btnMode.addEventListener("click", ()=> setUIMode(document.body.classList.contains("mobile-mode") ? "desktop" : "mobile"));
+    btnMode.addEventListener("click", ()=>{
+      const isMobile = document.body.classList.contains("mobile-mode");
+      setUIMode(isMobile ? "desktop" : "mobile");
+    });
 
-    // Streams
+    // ===== Streams
     const imgFull=$("#imgFull"), imgCam=$("#imgCam");
     const streamUrl=$("#streamUrl"), streamUrlCam=$("#streamUrlCam");
     const applyStream=$("#applyStream"), reloadStream=$("#reloadStream");
@@ -379,163 +387,123 @@
     const btnDisconnectStream = $("#disconnectStream");
     const btnDisconnectStreamCam = $("#disconnectStreamCam");
 
+    const streamDefault = param("stream", DEFAULTS.STREAM_URL);
+    setStream(streamDefault);
+
     function setStream(url){
       imgFull.src = url; imgCam.src = url;
       streamUrl.value = url; streamUrlCam.value = url;
-      streamFullWrap.classList.remove("error"); streamCamWrap.classList.remove("error");
+      clearStreamError(true); clearStreamError(false);
     }
-    setStream(qp.get("stream") || DEFAULTS.STREAM_URL);
-
-    function reloadImg(img){ try{ const u=new URL(img.src, location.href); u.searchParams.set("_", Date.now()); img.src=u.toString(); }catch{} }
-    function showStreamError(full,msg){ const wrap= full?streamFullWrap:streamCamWrap; wrap.classList.add("error"); const a= full?$("#alertFull"):$("#alertCam"); a.firstChild.textContent = msg||"Flux vidéo indisponible."; }
-    imgFull.addEventListener("error", ()=> showStreamError(true,"Flux vidéo indisponible (URL invalide, caméra arrêtée ou réseau HS)."));
-    imgCam.addEventListener("error", ()=> showStreamError(false,"Flux vidéo indisponible (URL invalide, caméra arrêtée ou réseau HS)."));
-    $("#applyStream").addEventListener("click", ()=>{ const u=(streamUrl.value||"").trim(); if(u) setStream(u); });
-    $("#reloadStream").addEventListener("click", ()=> reloadImg(imgFull));
-    $("#applyStreamCam").addEventListener("click", ()=>{ const u=(streamUrlCam.value||"").trim(); if(u) setStream(u); });
-    $("#reloadStreamCam").addEventListener("click", ()=> reloadImg(imgCam));
+    function reloadImg(img){
+      try{
+        const u=new URL(img.src, location.href);
+        u.searchParams.set("_", Date.now());
+        img.src=u.toString();
+      }catch{}
+    }
+    function showStreamError(full, message){
+      const wrap = full ? streamFullWrap : streamCamWrap;
+      wrap.classList.add("error");
+      const alert = full ? $("#alertFull") : $("#alertCam");
+      alert.firstChild.textContent = message || "Flux vidéo indisponible.";
+    }
+    function clearStreamError(full){
+      const wrap = full ? streamFullWrap : streamCamWrap;
+      wrap.classList.remove("error");
+    }
+    imgFull.addEventListener("error", ()=>{
+      showStreamError(true, "Flux vidéo indisponible (URL invalide, caméra arrêtée ou réseau HS).");
+      notify("Erreur flux vidéo (vue complète). Vérifiez l’URL ou la connexion.", "err", [{id:"r",label:"Réessayer",onClick:()=>reloadImg(imgFull)}]);
+    });
+    imgCam.addEventListener("error", ()=>{
+      showStreamError(false, "Flux vidéo indisponible (URL invalide, caméra arrêtée ou réseau HS).");
+      notify("Erreur flux vidéo (vue caméra). Vérifiez l’URL ou la connexion.", "err", [{id:"r",label:"Réessayer",onClick:()=>reloadImg(imgCam)}]);
+    });
+    imgFull.addEventListener("load", ()=> clearStreamError(true));
+    imgCam.addEventListener("load",  ()=> clearStreamError(false));
+    applyStream.addEventListener("click", ()=>{
+      const u=(streamUrl.value||"").trim();
+      if(u){ setStream(u); } else { notify("URL de flux vide.", "warn"); }
+    });
+    reloadStream.addEventListener("click", ()=> reloadImg(imgFull));
+    applyStreamCam.addEventListener("click", ()=>{
+      const u=(streamUrlCam.value||"").trim();
+      if(u){ setStream(u); } else { notify("URL de flux vide.", "warn"); }
+    });
+    reloadStreamCam.addEventListener("click", ()=> reloadImg(imgCam));
     retryFull.addEventListener("click", ()=> reloadImg(imgFull));
     retryCam.addEventListener("click",  ()=> reloadImg(imgCam));
-    btnDisconnectStream?.addEventListener("click", ()=>{ imgFull.src=""; streamFullWrap.classList.add("error"); $("#alertFull").firstChild.textContent="Flux déconnecté par l’utilisateur."; });
-    btnDisconnectStreamCam?.addEventListener("click", ()=>{ imgCam.src=""; streamCamWrap.classList.add("error"); $("#alertCam").firstChild.textContent="Flux déconnecté par l’utilisateur."; });
 
+    function disconnectStream(img, full){
+      try{ img.src = ""; }catch{}
+      const wrap  = full ? streamFullWrap : streamCamWrap;
+      const alert = full ? $("#alertFull") : $("#alertCam");
+      if (wrap)  wrap.classList.add("error");
+      if (alert) alert.firstChild.textContent = "Flux déconnecté par l’utilisateur.";
+      notify("Flux vidéo déconnecté.", "warn");
+    }
+    if (btnDisconnectStream)    btnDisconnectStream.addEventListener("click", ()=> disconnectStream(imgFull, true));
+    if (btnDisconnectStreamCam) btnDisconnectStreamCam.addEventListener("click", ()=> disconnectStream(imgCam,  false));
+
+    // Onglet cam seul
     $("#openCamOnly").addEventListener("click", ()=>{
       const u = (streamUrl.value||DEFAULTS.STREAM_URL).trim();
       const url = `${location.pathname}?view=cam&stream=${encodeURIComponent(u)}&logo=${encodeURIComponent(logoEl.src)}&team=${encodeURIComponent(teamEl.textContent.replace(/^Équipe :\s*/,''))}`;
       window.open(url, "_blank");
     });
 
-    // ============ Compteur vitesse ============
-    const SPEED_MAX = 25;
-    const needle = $("#needle");
-    const arcProg = $("#arcProg");
-    const speedVal = $("#speedVal");
-    const speedValBig = $("#speedValBig");
-    const speedValCam = $("#speedValCam");
-
-    // ticks (0..25)
-    (function buildTicks(){
-      const g = $("#ticks");
-      const start = -160; const end = -20; const span  = end - start;
-      for(let v=0; v<=SPEED_MAX; v++){
-        const t=v/SPEED_MAX, ang=(start+t*span)*Math.PI/180;
-        const R1 = (v%5===0)? 82 : 88, R2 = 96;
-        const x1=110+R1*Math.cos(ang), y1=110+R1*Math.sin(ang);
-        const x2=110+R2*Math.cos(ang), y2=110+R2*Math.sin(ang);
-        const ln=document.createElementNS("http://www.w3.org/2000/svg","line");
-        ln.setAttribute("x1",x1.toFixed(1)); ln.setAttribute("y1",y1.toFixed(1));
-        ln.setAttribute("x2",x2.toFixed(1)); ln.setAttribute("y2",y2.toFixed(1));
-        ln.setAttribute("class",(v%5===0)?"tickMajor":"tick"); ln.setAttribute("stroke-width",(v%5===0)?2:1);
-        g.appendChild(ln);
-        if(v%5===0){
-          const tx=110+70*Math.cos(ang), ty=110+70*Math.sin(ang)+4;
-          const text=document.createElementNS("http://www.w3.org/2000/svg","text");
-          text.setAttribute("x",tx.toFixed(1)); text.setAttribute("y",ty.toFixed(1));
-          text.setAttribute("fill","#e5e7eb"); text.setAttribute("font-size","10"); text.setAttribute("text-anchor","middle");
-          text.textContent=v; g.appendChild(text);
-        }
-      }
-      const arcLen = Math.PI*90;
-      arcProg.setAttribute("stroke-dasharray", `${arcLen} 999`);
-      arcProg.dataset.arcLen = arcLen;
-    })();
-
-    function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
-
-    function setNeedleBySpeed(v){
-      const vC = clamp(v,0,SPEED_MAX);
-      const ang = -160 + (vC / SPEED_MAX) * 140;
-      needle.style.transform = `rotate(${ang+180}deg)`;
-      const arcLen = parseFloat(arcProg.dataset.arcLen || "282.7");
-      const dash = (vC/SPEED_MAX) * arcLen;
-      arcProg.setAttribute("stroke-dasharray", `${dash} 999`);
-      if (vC >= SPEED_MAX*0.88)      arcProg.setAttribute("stroke", "#ef4444");
-      else if (vC >= SPEED_MAX*0.60) arcProg.setAttribute("stroke", "#f59e0b");
-      else                            arcProg.setAttribute("stroke", "#22c55e");
-    }
-
-    // animation aiguille ~250ms ; nombre MAJ immédiat
-    let animId=null, currentSpeed=0;
-    function updateSpeed(target){
-      target = clamp(Number(target)||0, 0, SPEED_MAX);
-
-      // 1) mettre à jour le NUMÉRIQUE tout de suite (plus d'effet "06")
-      const num = Math.round(target);
-      if (speedValBig) speedValBig.textContent = String(num);
-      if (speedVal)    speedVal.textContent    = target.toFixed(1);
-      if (speedValCam) speedValCam.textContent = target.toFixed(1);
-
-      // 2) animer l'aiguille vers la cible
-      if (animId) cancelAnimationFrame(animId);
-      const start = currentSpeed;
-      const delta = target - start;
-      const dur = 250; // ms
-      const t0 = performance.now();
-
-      (function anim(now){
-        const t = Math.min(1, (now - t0)/dur);
-        // easeOutCubic
-        const e = 1 - Math.pow(1 - t, 3);
-        const v = start + delta * e;
-        setNeedleBySpeed(v);
-        if (t < 1){ animId = requestAnimationFrame(anim); }
-        else { currentSpeed = target; animId = null; }
-      })(t0);
-    }
-
-    // Batterie / Ping
-    const battVal=$("#battVal"), battValCam=$("#battValCam");
-    const bfill=$("#bfill"), bfillCam=$("#bfillCam");
-    const pingVal=$("#pingVal"), pingValCam=$("#pingValCam");
-    function updateBattery(pct){
-      if(!Number.isFinite(pct)) return;
-      const n=clamp(pct,0,100);
-      battVal.textContent = String(Math.round(n));
-      battValCam.textContent = String(Math.round(n));
-      const w=`${n}%`, col = n<20?'#ef4444':(n<50?'#f59e0b':'#22c55e');
-      bfill.style.width=w; bfill.style.background=col;
-      bfillCam.style.width=w; bfillCam.style.background=col;
-    }
-    function updatePing(ms){
-      if(!Number.isFinite(ms)) return;
-      const n=Math.max(0,Math.round(ms));
-      pingVal.textContent=String(n); pingValCam.textContent=String(n);
-    }
-
-    // Double-clic HUD → test rapide
-    $("#hudFull")?.addEventListener("dblclick", ()=> updateSpeed(Math.random()*SPEED_MAX));
-
-    // ====== (WS + HTTP identiques à avant ; omis ici pour compacité) ======
+    // ===== WebSocket + HTTP fallback
     const wsUrlEl=$("#wsUrl"), httpBaseEl=$("#httpBase");
     const btnConnect=$("#btnConnect"), btnDisconnect=$("#btnDisconnect");
     const btnPing=$("#btnPing"), btnStop=$("#btnStop");
     const wsDot=$("#wsDot"), wsStatus=$("#wsStatus");
-    wsUrlEl.value = qp.get("ws") || DEFAULTS.WS_URL;
-    httpBaseEl.value = qp.get("http") || DEFAULTS.HTTP_BASE;
-    let ws=null, lastPingAt=null;
-    const setWsStatus=(open,txt,level)=>{ wsDot.classList.remove("warn","ok"); wsDot.classList.toggle("ok",!!open); if(level==="warn") wsDot.classList.add("warn"); wsStatus.textContent=txt || (open?"connecté":"déconnecté"); };
+
+    wsUrlEl.value = param("ws", DEFAULTS.WS_URL);
+    httpBaseEl.value = param("http", DEFAULTS.HTTP_BASE);
+
+    let ws=null;
+    let lastPingAt = null;
+
+    const setWsStatus=(open,txt,level)=>{
+      wsDot.classList.remove("warn","ok");
+      wsDot.classList.toggle("ok",!!open);
+      if(level==="warn") wsDot.classList.add("warn");
+      wsStatus.textContent=txt || (open?"connecté":"déconnecté");
+    };
+
     function connectWS(){
       const url=wsUrlEl.value.trim();
-      if(!/^wss?:\/\//i.test(url)) return;
+      if(!/^wss?:\/\//i.test(url)){
+        notify("URL WebSocket invalide (ex: ws://192.168.4.1/ws)", "warn");
+        return;
+      }
       try{ if(ws&&ws.readyState===WebSocket.OPEN) ws.close(); }catch{}
       setWsStatus(false,"connexion…","warn");
-      try{ ws=new WebSocket(url); }catch{ setWsStatus(false,"erreur"); return; }
-      ws.addEventListener("open", ()=> setWsStatus(true,"connecté"));
-      ws.addEventListener("close",()=> setWsStatus(false,"déconnecté"));
-      ws.addEventListener("error",()=> setWsStatus(false,"erreur"));
+      try{ ws=new WebSocket(url); }
+      catch(e){ notify("Échec d’ouverture WebSocket (URL invalide ?)", "err"); setWsStatus(false,"erreur"); return; }
+
+      ws.addEventListener("open", ()=>{ setWsStatus(true,"connecté"); notify("WebSocket connectée.", "ok"); });
+      ws.addEventListener("close",()=>{ setWsStatus(false,"déconnecté"); notify("WebSocket déconnectée.", "warn"); });
+      ws.addEventListener("error",()=>{ setWsStatus(false,"erreur"); notify("Erreur WebSocket (réseau / serveur).", "err"); });
+
+      // Réception télémétrie
       ws.addEventListener("message",(ev)=>{
         try{
           let payload = {};
           try{ const obj = JSON.parse(ev.data); if(obj && typeof obj === "object") payload = obj; }
           catch{
             const s = String(ev.data).trim();
-            const mSpd=s.match(/^SPD\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
-            const mBat=s.match(/^BATT\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
-            const mPing=s.match(/^PING\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
+            const mSpd = s.match(/^SPD\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
+            const mBat = s.match(/^BATT\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
+            const mPing= s.match(/^PING\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
             if(mSpd) payload.speed = parseFloat(mSpd[1]);
             if(mBat) payload.battery = parseFloat(mBat[1]);
             if(mPing) payload.ping = parseFloat(mPing[1]);
-            if(/^PONG(?:[:\s]\d+)?$/i.test(s) && lastPingAt!=null){ updatePing(Math.round(performance.now()-lastPingAt)); lastPingAt=null; }
+            if(/^PONG(?:[:\s]\d+)?$/i.test(s) && lastPingAt!=null){
+              const rtt = Math.round(performance.now() - lastPingAt);
+              updatePing(rtt); lastPingAt=null;
+            }
           }
           if("speed" in payload)   updateSpeed(payload.speed);
           if("battery" in payload) updateBattery(payload.battery);
@@ -543,37 +511,120 @@
         }catch{}
       });
     }
-    function disconnectWS(){ try{ ws&&ws.close(); }catch{} setWsStatus(false,"déconnecté"); }
+    function disconnectWS(){ try{ ws&&ws.close(); }catch{} setWsStatus(false,"déconnecté"); notify("WebSocket déconnectée.", "warn"); }
     async function sendOverHTTP(cmd){
       const base=httpBaseEl.value.trim().replace(/\/+$/,"");
-      if(!/^https?:\/\//i.test(base)) return;
-      try{ await fetch(`${base}/cmd?c=${encodeURIComponent(cmd)}`,{cache:"no-store"}); }catch{}
+      if(!/^https?:\/\//i.test(base)){ notify("Base HTTP invalide (ex: http://192.168.4.1)", "warn"); return; }
+      try{
+        const res = await fetch(`${base}/cmd?c=${encodeURIComponent(cmd)}`,{cache:"no-store"});
+        if(!res.ok){ notify(`HTTP ${res.status} lors de l'envoi de la commande.`, "warn"); }
+        else{ notify("Commande envoyée (HTTP).", "ok"); }
+      }catch{ notify("Erreur réseau HTTP (commande non envoyée).", "err"); }
     }
     function sendCommand(cmd){
-      if(ws&&ws.readyState===WebSocket.OPEN){ try{ ws.send(cmd); return; }catch{} }
+      if(ws&&ws.readyState===WebSocket.OPEN){
+        try{ ws.send(cmd); notify("Commande envoyée (WS).", "ok"); return; }catch{ notify("Échec envoi WS, bascule HTTP.", "warn"); }
+      }
       sendOverHTTP(cmd);
     }
     btnConnect.addEventListener("click", connectWS);
     btnDisconnect.addEventListener("click", disconnectWS);
-    btnPing.addEventListener("click", ()=>{ if(ws&&ws.readyState===WebSocket.OPEN){ lastPingAt=performance.now(); try{ ws.send("PING"); }catch{} }});
+    btnPing.addEventListener("click", ()=>{
+      if(ws && ws.readyState===WebSocket.OPEN){ lastPingAt = performance.now(); try{ ws.send("PING"); }catch{} }
+      else{ notify("WS non connecté : impossible de mesurer le ping (RTT).", "warn"); }
+    });
     btnStop.addEventListener("click", ()=> sendCommand("S"));
 
-    // clavier
-    const pressed=new Set();
-    const KeyMap={"ArrowUp":"F","KeyZ":"F","ArrowDown":"B","KeyS":"B","ArrowLeft":"L","KeyQ":"L","ArrowRight":"R","KeyD":"R","Space":"S"};
-    function handleKey(code, down){ if(!(code in KeyMap)) return; const cmd=KeyMap[code]; if(cmd==="S"){ sendCommand("S"); return; } if(down){ sendCommand(cmd); } else { sendCommand("S"); } }
-    window.addEventListener("keydown",(e)=>{ const c=e.code; if(!(c in KeyMap)) return; if(!viewFull.classList.contains("active")) return; e.preventDefault(); if(pressed.has(c)) return; pressed.add(c); handleKey(c,true); },{passive:false});
-    window.addEventListener("keyup",(e)=>{ const c=e.code; if(!(c in KeyMap)) return; if(!viewFull.classList.contains("active")) return; e.preventDefault(); pressed.delete(c); handleKey(c,false); },{passive:false});
-    window.addEventListener("blur", ()=> sendCommand("S"));
-    document.addEventListener("visibilitychange", ()=>{ if(document.hidden) sendCommand("S"); });
-
-    // Plein écran + wakelock
+    // ===== Plein écran CONTAINER + Wake Lock
     const btnFS=$("#btnFS"), btnReload=$("#btnReload");
-    function requestFullscreenOn(el){ if(!el) return; if (el.requestFullscreen) { el.requestFullscreen().catch(()=>{}); return; } if (el.webkitRequestFullscreen) { try{ el.webkitRequestFullscreen(); }catch{} } }
-    btnFS?.addEventListener("click", ()=>{ requestFullscreenOn(document.getElementById("streamCamWrap")); enableWakeLock(); });
-    btnReload?.addEventListener("click", ()=> reloadImg(imgCam));
-    let wakeLock=null; async function enableWakeLock(){ try{ if(!wakeLock){ wakeLock = await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release", ()=>{ wakeLock=null; }); } }catch{} }
-    async function attemptVideoFullscreen(){ const wrap=document.getElementById("streamCamWrap"); if(!wrap) return; try{ if(document.fullscreenElement !== wrap){ if (wrap.requestFullscreen) await wrap.requestFullscreen(); else if (wrap.webkitRequestFullscreen) wrap.webkitRequestFullscreen(); } }catch{} enableWakeLock(); }
+    function requestFullscreenOn(el){
+      if(!el) return;
+      if (el.requestFullscreen) { el.requestFullscreen().catch(()=>{}); return; }
+      if (el.webkitRequestFullscreen) { try{ el.webkitRequestFullscreen(); }catch{} }
+    }
+    if(btnFS){
+      btnFS.addEventListener("click", ()=>{
+        requestFullscreenOn(document.getElementById("streamCamWrap"));
+        enableWakeLock();
+      });
+    }
+    if(btnReload){ btnReload.addEventListener("click", ()=> reloadImg(imgCam)); }
+
+    let wakeLock=null;
+    async function enableWakeLock(){
+      try{
+        if(!wakeLock){
+          wakeLock = await navigator.wakeLock.request("screen");
+          notify("Anti-veille activé (si supporté).", "ok");
+          wakeLock.addEventListener("release", ()=>{ wakeLock=null; notify("Anti-veille relâché.", "warn"); });
+        }
+      }catch{}
+    }
+    async function attemptVideoFullscreen(fromButton=false){
+      const wrap = document.getElementById("streamCamWrap");
+      if(!wrap) return;
+      try{
+        if(document.fullscreenElement !== wrap){
+          if (wrap.requestFullscreen) { await wrap.requestFullscreen(); }
+          else if (wrap.webkitRequestFullscreen) { wrap.webkitRequestFullscreen(); }
+          if(!fromButton) notify("Plein écran (HUD) demandé.", "ok");
+        }
+      }catch{}
+      enableWakeLock();
+    }
+
+    // ====== VITESSE (numérique)
+    const speedValBig = $("#speedValBig");
+    const speedValCam = $("#speedValCam");
+
+    let _speedDisp = 0; // km/h (lissé)
+
+    function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+
+    function setSpeedDisplay(v){
+      const n = clamp(v, 0, 999);
+      _speedDisp = n;
+      if(speedValBig) speedValBig.textContent = Math.round(n).toString().padStart(1,'0');
+      if(speedValCam) speedValCam.textContent = n.toFixed(1);
+    }
+
+    // Lissage court pour un rendu propre
+    function updateSpeed(v){
+      const target = Number.isFinite(v) ? v : 0;
+      const frames = 5;
+      let i=0; const start=_speedDisp; const delta=target-start;
+      (function step(){
+        i++; setSpeedDisplay(start + delta*(i/frames));
+        if(i<frames) requestAnimationFrame(step);
+      })();
+    }
+
+    // ====== Batterie / Ping
+    const battVal = $("#battVal"), battValCam = $("#battValCam");
+    const bfill = $("#bfill"), bfillCam = $("#bfillCam");
+    const pingVal = $("#pingVal"), pingValCam = $("#pingValCam");
+
+    function updateBattery(pct){
+      if(!Number.isFinite(pct)) return;
+      const n = clamp(pct, 0, 100);
+      if(battVal) battVal.textContent = String(Math.round(n));
+      if(battValCam) battValCam.textContent = String(Math.round(n));
+      const w = `${n}%`;
+      const col = n<20?'#ef4444':(n<50?'#f59e0b':'#22c55e');
+      if(bfill){ bfill.style.width = w; bfill.style.background = col; }
+      if(bfillCam){ bfillCam.style.width = w; bfillCam.style.background = col; }
+    }
+    function updatePing(ms){
+      if(!Number.isFinite(ms)) return;
+      const n = Math.max(0, Math.round(ms));
+      if(pingVal) pingVal.textContent = String(n);
+      if(pingValCam) pingValCam.textContent = String(n);
+    }
+
+    // Debug rapide : double-clic HUD pour simuler vitesse
+    $("#hudFull")?.addEventListener("dblclick", ()=>{
+      updateSpeed(Math.random()*25);
+    });
   </script>
 </body>
 </html>
