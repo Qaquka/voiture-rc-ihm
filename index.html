@@ -624,6 +624,8 @@
     // Debug rapide : double-clic HUD pour simuler vitesse
     $("#hudFull")?.addEventListener("dblclick", ()=>{
       updateSpeed(Math.random()*25);
+      updateBattery(Math.random()*100);
+      updatePing(Math.random()*100);
     });
   </script>
 </body>
