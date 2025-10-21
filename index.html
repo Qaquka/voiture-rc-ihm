@@ -26,8 +26,7 @@
     .tabs{ margin-left:auto; display:flex; gap:8px; flex-wrap:wrap; }
     .tabbtn, .modebtn{
       background:#0b1220; color:var(--text); border:1px solid rgba(255,255,255,.16);
-      padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:600;
-    }
+      padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:600; }
     .tabbtn.active{ border-color:var(--accent); outline:2px solid var(--accent); }
     .modebtn{ margin-left:8px; white-space:nowrap; }
     main{ max-width:1100px; margin:14px auto 18px; padding:0 12px; }
@@ -104,23 +103,31 @@
     body.mobile-mode #view-full .row input[type="text"]{ display:none; }
     body.mobile-mode #view-full #openCamOnly{ display:none; }
     body.mobile-mode #view-cam .row input[type="text"]{ display:none; }
-    body.mobile-mode #view-full .stream{ aspect-ratio:auto; height: calc(100vh - 260px); }
-    body.mobile-mode #view-cam .stream{ height: calc(100vh - 160px); }
-    body.mobile-mode .tabbtn, body.mobile-mode .modebtn, body-mobile-mode button.link{ padding:10px 14px; border-radius:12px; }
+    body.mobile-mode #view-full .stream{ aspect-ratio:auto; height: calc(100vh - 300px); }
+    body.mobile-mode #view-cam .stream{ height: calc(100vh - 200px); }
+    body.mobile-mode .tabbtn, body-mobile-mode .modebtn, body-mobile-mode button.link{ padding:10px 14px; border-radius:12px; }
     body.mobile-mode .btn{ padding:18px 14px; font-size:1.05rem; }
 
     /* ========= HUD (overlay) ========= */
     .hud{
       position:absolute; bottom:0; left:0; right:0;
-      display:flex; justify-content:center; gap:28px; align-items:center; flex-wrap:wrap;
       background:rgba(0,0,0,.45); border-top:1px solid rgba(255,255,255,.18);
       color:#fff; padding:10px 14px; font-weight:700; z-index:3;
+
+      /* Layout 3 colonnes (gauche/centre/droite) */
+      display:grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items:center; gap:16px;
     }
+    .hud-left{ justify-self:start; display:flex; align-items:center; }
+    .hud-center{ justify-self:center; }
+    .hud-right{ justify-self:end; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+
     .hud .label{ font-size:.85rem; opacity:.9; }
     .hud .val{ font-size:1.15rem; line-height:1; }
     .hud .unit{ font-size:.9rem; opacity:.9; }
 
-    /* Vitesse numérique GROS */
+    /* Vitesse numérique GROS (centrée) */
     .speedBig{
       display:flex; align-items:baseline; gap:10px;
       font-size:3rem; line-height:1; letter-spacing:1px;
@@ -131,9 +138,7 @@
     .speedBig .unit{ font-size:1rem; opacity:.9; margin-bottom:4px; }
 
     /* Batterie segments */
-    .batt{
-      display:flex; align-items:center; gap:6px;
-    }
+    .batt{ display:flex; align-items:center; gap:6px; }
     .batt-pack{
       display:grid; grid-auto-flow:column; gap:2px; padding:2px 4px; border-radius:6px;
       border:1px solid rgba(255,255,255,.45);
@@ -156,6 +161,19 @@
     .key{ border:1px solid rgba(255,255,255,.2); padding:2px 6px; border-radius:6px; min-width:20px; text-align:center;}
     .key.on{ background:rgba(56,189,248,.15); border-color:rgba(56,189,248,.6); color:#fff;}
 
+    /* ====== Pedals (Accélération / Freinage) ====== */
+    .pedals{ display:flex; gap:16px; align-items:center; }
+    .ped{ display:flex; flex-direction:column; gap:4px; min-width:150px; }
+    .ped .plabel{ font-size:.75rem; opacity:.9; }
+    .bar{ position:relative; height:10px; border-radius:999px; background:#0b1220; border:1px solid rgba(255,255,255,.18); overflow:hidden; }
+    .fill{ position:absolute; inset:0 auto 0 0; width:0%; transition: width .12s ease-out; }
+    .fill.accel{ background:linear-gradient(90deg,#16a34a,#22c55e); }
+    .fill.brake{ background:linear-gradient(90deg,#b91c1c,#ef4444); }
+
+    @media (max-width:640px){
+      .hud{ grid-template-columns: 1fr auto; grid-auto-rows:auto; }
+      .hud-right{ grid-column: 1 / -1; justify-self:center; }
+    }
   </style>
 </head>
 <body>
@@ -195,24 +213,37 @@
           <div class="stream" id="streamFullWrap">
             <!-- === HUD FULL === -->
             <div class="hud" id="hudFull" aria-live="polite">
-              <!-- Vitesse numérique BIG -->
-              <div class="speedBig" aria-label="Vitesse actuelle">
-                <span class="num" id="speedValBig">0</span>
-                <span class="unit">KM/H</span>
-              </div>
-
-              <!-- Batterie segments -->
-              <div class="batt">
-                <span class="label">Batt.</span>
-                <div class="batt-pack" id="battPack" aria-hidden="true">
-                  <span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span>
+              <div class="hud-left">
+                <div class="pedals">
+                  <div class="ped">
+                    <span class="plabel">Accélération</span>
+                    <div class="bar"><div class="fill accel" id="accelFill"></div></div>
+                  </div>
+                  <div class="ped">
+                    <span class="plabel">Freinage</span>
+                    <div class="bar"><div class="fill brake" id="brakeFill"></div></div>
+                  </div>
                 </div>
-                <span class="val" id="battVal">--</span><span class="unit">%</span>
               </div>
 
-              <!-- Ping -->
-              <div class="rtt">
-                <span class="ping-badge" id="pingBadge">Ping --ms</span>
+              <div class="hud-center">
+                <div class="speedBig" aria-label="Vitesse actuelle">
+                  <span class="num" id="speedValBig">0</span>
+                  <span class="unit">KM/H</span>
+                </div>
+              </div>
+
+              <div class="hud-right">
+                <div class="batt">
+                  <span class="label">Batt.</span>
+                  <div class="batt-pack" id="battPack" aria-hidden="true">
+                    <span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span>
+                  </div>
+                  <span class="val" id="battVal">--</span><span class="unit">%</span>
+                </div>
+                <div class="rtt">
+                  <span class="ping-badge" id="pingBadge">Ping --ms</span>
+                </div>
               </div>
             </div>
             <!-- === /HUD FULL === -->
@@ -282,19 +313,37 @@
           <div class="stream" id="streamCamWrap" style="margin-top:10px">
             <!-- === HUD CAM === -->
             <div class="hud" id="hudCam" aria-live="polite">
-              <div style="display:flex;align-items:baseline;gap:6px;font-weight:800;">
-                <span id="speedValCam" style="font-size:2rem;line-height:1;font-variant-numeric:tabular-nums">0.0</span>
-                <span class="unit">km/h</span>
-              </div>
-              <div class="batt">
-                <span class="label">Batt.</span>
-                <div class="batt-pack" id="battPackCam" aria-hidden="true">
-                  <span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span>
+              <div class="hud-left">
+                <div class="pedals">
+                  <div class="ped" style="min-width:120px">
+                    <span class="plabel">Accélération</span>
+                    <div class="bar"><div class="fill accel" id="accelFillCam"></div></div>
+                  </div>
+                  <div class="ped" style="min-width:120px">
+                    <span class="plabel">Freinage</span>
+                    <div class="bar"><div class="fill brake" id="brakeFillCam"></div></div>
+                  </div>
                 </div>
-                <span class="val" id="battValCam">--</span><span class="unit">%</span>
               </div>
-              <div class="rtt">
-                <span class="ping-badge" id="pingBadgeCam">Ping --ms</span>
+
+              <div class="hud-center">
+                <div style="display:flex;align-items:baseline;gap:6px;font-weight:800;">
+                  <span id="speedValCam" style="font-size:2rem;line-height:1;font-variant-numeric:tabular-nums">0.0</span>
+                  <span class="unit">km/h</span>
+                </div>
+              </div>
+
+              <div class="hud-right">
+                <div class="batt">
+                  <span class="label">Batt.</span>
+                  <div class="batt-pack" id="battPackCam" aria-hidden="true">
+                    <span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span>
+                  </div>
+                  <span class="val" id="battValCam">--</span><span class="unit">%</span>
+                </div>
+                <div class="rtt">
+                  <span class="ping-badge" id="pingBadgeCam">Ping --ms</span>
+                </div>
               </div>
             </div>
             <!-- === /HUD CAM === -->
@@ -352,7 +401,7 @@
       TEAM_TXT:"Groupe 2 Voiture RC"
     };
 
-    // Toast (queue simple)
+    // Toast
     function notify(msg, level="err", actions=[]){
       const wrap=$("#toast");
       const el=document.createElement("div");
@@ -462,7 +511,6 @@
         const fps = 1/dt;
         _fpsAvg = _fpsAvg*0.8 + fps*0.2;
         if(fpsBadge) fpsBadge.textContent = "FPS " + Math.max(0,Math.round(_fpsAvg)).toString().padStart(2,"0");
-        // badge couleur
         fpsBadge.className="badge " + (_fpsAvg>20?"ok":_fpsAvg>10?"warn":"err");
       }
       _lastFrameAt=now;
@@ -538,6 +586,12 @@
     const btnPing=$("#btnPing"), btnStop=$("#btnStop");
     const wsDot=$("#wsDot"), wsStatus=$("#wsStatus");
 
+    (()=>{ 
+      if(typeof wsStatus === "undefined"){ 
+        window.wsStatus = document.getElementById("wsStatus"); 
+      }
+    })();
+
     wsUrlEl.value = param("ws", DEFAULTS.WS_URL);
     httpBaseEl.value = param("http", DEFAULTS.HTTP_BASE);
 
@@ -552,7 +606,7 @@
     };
 
     function scheduleReconnect(){
-      if(DEMO) return; // inutile en démo
+      if(DEMO) return;
       if(reconnectTimer) return;
       const delay = Math.min(8000, 500 * Math.pow(2, reconnectTry++));
       reconnectTimer = setTimeout(()=>{ reconnectTimer=null; connectWS(); }, delay);
@@ -626,9 +680,13 @@
     }
     function sendCommand(cmd){
       if(ws&&ws.readyState===WebSocket.OPEN){
-        try{ ws.send(cmd); return; }catch{ notify("Échec envoi WS, bascule HTTP.", "warn"); }
+        try{ ws.send(cmd); }catch{ notify("Échec envoi WS, bascule HTTP.", "warn"); sendOverHTTP(cmd); }
+      } else {
+        sendOverHTTP(cmd);
       }
-      sendOverHTTP(cmd);
+      if(cmd==="F") setThrottle(1), setBrake(0);
+      else if(cmd==="B") setBrake(1), setThrottle(0);
+      else if(cmd==="S") setBrake(1), decayBrakeSoon();
     }
     $("#btnConnect").addEventListener("click", connectWS);
     $("#btnDisconnect").addEventListener("click", disconnectWS);
@@ -679,22 +737,17 @@
       enableWakeLock();
     }
 
-    // ====== VITESSE (numérique) + batterie + ping
+    // ====== VITESSE + Batterie + Ping
     const speedValBig = $("#speedValBig");
     const speedValCam = $("#speedValCam");
-
-    let _speedDisp = 0; // km/h (lissé)
-
+    let _speedDisp = 0;
     function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
-
     function setSpeedDisplay(v){
       const n = clamp(v, 0, 999);
       _speedDisp = n;
       if(speedValBig) speedValBig.textContent = Math.round(n).toString();
       if(speedValCam) speedValCam.textContent = n.toFixed(1);
     }
-
-    // Lissage court pour un rendu propre
     function updateSpeed(v){
       const target = Number.isFinite(v) ? v : 0;
       const frames = 5;
@@ -705,67 +758,132 @@
       })();
     }
 
-    // Batterie segments
-    const battVal = $("#battVal"), battValCam = $("#battValCam");
-    const battPack = $("#battPack"), battPackCam = $("#battPackCam");
-    function setCells(pack, pct){
-      if(!pack) return;
-      const cells = Array.from(pack.querySelectorAll(".cell"));
-      const lit = Math.round((pct/100)*cells.length);
-      cells.forEach((c,idx)=>{
-        c.className="cell";
-        if(idx<lit){
-          const ratio = pct/100;
-          if(ratio<0.2) c.classList.add("low");
-          else if(ratio<0.5) c.classList.add("mid");
-          else c.classList.add("on");
-        }
-      });
-      if(pct<10) pack.classList.add("blink"); else pack.classList.remove("blink");
+    // ====== Pédales
+    const accelFill = $("#accelFill");
+    const brakeFill = $("#brakeFill");
+    const accelFillCam = $("#accelFillCam");
+    const brakeFillCam = $("#brakeFillCam");
+
+    let _accel=0, _brake=0, _decayRAF=null;
+
+    function drawBars(){
+      const aPct = Math.round(clamp(_accel,0,1)*100);
+      const bPct = Math.round(clamp(_brake,0,1)*100);
+      if(accelFill) accelFill.style.width = aPct+"%";
+      if(brakeFill) brakeFill.style.width = bPct+"%";
+      if(accelFillCam) accelFillCam.style.width = aPct+"%";
+      if(brakeFillCam) brakeFillCam.style.width = bPct+"%";
     }
-    function updateBattery(pct){
-      if(!Number.isFinite(pct)) return;
-      const n = clamp(pct, 0, 100);
-      if(battVal) battVal.textContent = String(Math.round(n));
-      if(battValCam) battValCam.textContent = String(Math.round(n));
-      setCells(battPack,n); setCells(battPackCam,n);
+    function setThrottle(v){
+      _accel = clamp(v,0,1);
+      if(_accel>0) _brake=0;
+      drawBars();
+      startDecay();
+    }
+    function setBrake(v){
+      _brake = clamp(v,0,1);
+      if(_brake>0) _accel=0;
+      drawBars();
+      startDecay();
+    }
+    function startDecay(){
+      if(_decayRAF) return;
+      const decay = ()=>{
+        let changed=false;
+        const step=0.02;
+        if(_accel>0){ _accel=Math.max(0,_accel-step); changed=true; }
+        if(_brake>0){ _brake=Math.max(0,_brake-step); changed=true; }
+        if(changed){ drawBars(); _decayRAF=requestAnimationFrame(decay); }
+        else { _decayRAF=null; }
+      };
+      _decayRAF=requestAnimationFrame(decay);
+    }
+    function decayBrakeSoon(){
+      setTimeout(()=> setBrake(0.6), 10);
+      setTimeout(()=> setBrake(0.0), 180);
     }
 
-    // Ping badge couleurs
-    const pingBadge=$("#pingBadge"), pingBadgeCam=$("#pingBadgeCam");
-    function updatePing(ms){
-      if(!Number.isFinite(ms)) return;
-      const n = Math.max(0, Math.round(ms));
-      const cls = n<60?"ping-ok":(n<150?"ping-warn":"ping-err");
-      if(pingBadge){ pingBadge.className="ping-badge "+cls; pingBadge.textContent="Ping "+n+"ms"; }
-      if(pingBadgeCam){ pingBadgeCam.className="ping-badge "+cls; pingBadgeCam.textContent="Ping "+n+"ms"; }
-    }
-
-    // ===== Indicateur touches + contrôle clavier
+    // ===== Indicateur touches + contrôle clavier (AZERTY via event.key)
     const keyEls={ArrowUp:$("#kUp"), ArrowLeft:$("#kLeft"), ArrowDown:$("#kDown"), ArrowRight:$("#kRight"), Space:$("#kSpace")};
     const pressed=new Set();
-    const KeyMap={"ArrowUp":"F","KeyZ":"F","ArrowDown":"B","KeyS":"B","ArrowLeft":"L","KeyQ":"L","ArrowRight":"R","KeyD":"R","Space":"S"};
-    function sendDir(code, down){
-      const cmd = KeyMap[code]; if(!cmd) return;
-      if(cmd==="S"){ sendCommand("S"); return; }
-      if(down){ sendCommand(cmd); } else { sendCommand("S"); }
+
+    function keyToCmd(evt){
+      const k=(evt.key||"").toLowerCase();
+      if(k==="arrowup" || k==="z") return "F";
+      if(k==="arrowdown" || k==="s") return "B";
+      if(k==="arrowleft" || k==="q") return "L";
+      if(k==="arrowright" || k==="d") return "R";
+      if(k===" " || k==="space" || k==="spacebar") return "S";
+      return null;
     }
+
+    function sendDirFromKey(evt, down){
+      const cmd = keyToCmd(evt); if(!cmd) return;
+      if(cmd==="S"){ sendCommand("S"); setBrake(1); return; }
+      if(down){
+        if(cmd==="F") setThrottle(1);
+        if(cmd==="B") setBrake(1);
+        sendCommand(cmd);
+      } else {
+        sendCommand("S");
+      }
+    }
+
     window.addEventListener("keydown",(e)=>{
-      const c=e.code; if(!(c in KeyMap)) return;
+      const cmd = keyToCmd(e); if(!cmd) return;
       if(!viewFull.classList.contains("active")) return;
-      e.preventDefault(); if(pressed.has(c)) return; pressed.add(c);
-      keyEls[e.code]?.classList.add("on");
-      sendDir(c,true);
+      const id = (e.key||"").toLowerCase();
+      e.preventDefault(); if(pressed.has(id)) return; pressed.add(id);
+
+      // Highlight flèches / espace seulement (pas de badge ZQSD)
+      if(e.key==="ArrowUp")   keyEls.ArrowUp?.classList.add("on");
+      if(e.key==="ArrowLeft") keyEls.ArrowLeft?.classList.add("on");
+      if(e.key==="ArrowDown") keyEls.ArrowDown?.classList.add("on");
+      if(e.key==="ArrowRight")keyEls.ArrowRight?.classList.add("on");
+      if(e.key===" "){ keyEls.Space?.classList.add("on"); }
+
+      sendDirFromKey(e,true);
     },{passive:false});
+
     window.addEventListener("keyup",(e)=>{
-      const c=e.code; if(!(c in KeyMap)) return;
+      const cmd = keyToCmd(e); if(!cmd) return;
       if(!viewFull.classList.contains("active")) return;
-      e.preventDefault(); pressed.delete(c);
-      keyEls[e.code]?.classList.remove("on");
-      sendDir(c,false);
+      const id = (e.key||"").toLowerCase();
+      e.preventDefault(); pressed.delete(id);
+
+      if(e.key==="ArrowUp")   keyEls.ArrowUp?.classList.remove("on");
+      if(e.key==="ArrowLeft") keyEls.ArrowLeft?.classList.remove("on");
+      if(e.key==="ArrowDown") keyEls.ArrowDown?.classList.remove("on");
+      if(e.key==="ArrowRight")keyEls.ArrowRight?.classList.remove("on");
+      if(e.key===" "){ keyEls.Space?.classList.remove("on"); }
+
+      sendDirFromKey(e,false);
     },{passive:false});
+
     window.addEventListener("blur", ()=> sendCommand("S"));
     document.addEventListener("visibilitychange", ()=>{ if(document.hidden) sendCommand("S"); });
+
+    // Boutons à l'écran
+    $$(".controls .btn").forEach(b=>{
+      const dir=b.getAttribute("data-dir");
+      b.addEventListener("mousedown", ()=>{
+        b.classList.add("down");
+        if(dir==="forward") setThrottle(1);
+        if(dir==="backward") setBrake(1);
+        sendCommand(dir==="forward"?"F":dir==="backward"?"B":dir==="left"?"L":dir==="right"?"R":"S");
+      });
+      b.addEventListener("mouseup", ()=>{
+        b.classList.remove("down");
+        sendCommand("S");
+      });
+      b.addEventListener("mouseleave", ()=> b.classList.remove("down"));
+      b.addEventListener("touchstart", (e)=>{ e.preventDefault(); b.classList.add("down");
+        if(dir==="forward") setThrottle(1);
+        if(dir==="backward") setBrake(1);
+        sendCommand(dir==="forward"?"F":dir==="backward"?"B":dir==="left"?"L":dir==="right"?"R":"S");
+      },{passive:false});
+      b.addEventListener("touchend", (e)=>{ e.preventDefault(); b.classList.remove("down"); sendCommand("S"); },{passive:false});
+    });
 
     // ===== Gamepad (basique)
     let gpRAF=null;
@@ -776,12 +894,13 @@
         if(gp){
           const axY = gp.axes[1]||0; const axX = gp.axes[0]||0;
           const btnA = gp.buttons[0]?.pressed; // STOP
-          if(btnA) sendCommand("S");
+          if(btnA){ setBrake(1); sendCommand("S"); }
           else{
-            if(axY<-0.3) sendCommand("F");
-            else if(axY>0.3) sendCommand("B");
-            else if(axX<-0.3) sendCommand("L");
-            else if(axX>0.3) sendCommand("R");
+            if(axY<-0.25){ setThrottle(Math.min(1,(-axY))); sendCommand("F"); }
+            else if(axY>0.25){ setBrake(Math.min(1,axY)); sendCommand("B"); }
+            else if(axX<-0.3){ sendCommand("L"); }
+            else if(axX>0.3){ sendCommand("R"); }
+            else { sendCommand("S"); }
           }
         }
         gpRAF=requestAnimationFrame(loop);
@@ -801,6 +920,8 @@
         updateSpeed( 12 + 10*Math.sin(t*1.2) + 2*Math.cos(t*0.4) );
         updateBattery( 60 + 40*Math.sin(t*0.05) );
         updatePing( 40 + 40*(1+Math.sin(t*0.8)) );
+        setThrottle( Math.max(0, Math.sin(t*0.8)*0.6) );
+        setBrake( Math.max(0, Math.cos(t*0.6)*0.4) );
       }, 300);
     }
 
@@ -809,6 +930,15 @@
       if(e.key.toLowerCase()==="f" && viewCam.classList.contains("active")){
         requestFullscreenOn(document.getElementById("streamCamWrap"));
       }
+    });
+
+    // Debug rapide
+    $("#hudFull")?.addEventListener("dblclick", ()=>{
+      updateSpeed(Math.random()*25);
+      updateBattery(Math.random()*100);
+      updatePing(Math.random()*200);
+      setThrottle(Math.random());
+      setBrake(Math.random());
     });
   </script>
 </body>
