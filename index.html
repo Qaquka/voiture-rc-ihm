@@ -114,7 +114,6 @@
       background:rgba(0,0,0,.45); border-top:1px solid rgba(255,255,255,.18);
       color:#fff; padding:10px 14px; font-weight:700; z-index:3;
 
-      /* Layout 3 colonnes (gauche/centre/droite) */
       display:grid;
       grid-template-columns: 1fr auto 1fr;
       align-items:center; gap:16px;
@@ -389,31 +388,37 @@
   <div id="toast" aria-live="polite" aria-atomic="true"></div>
 
   <script>
+  (function(){
     // ===== Helpers & defaults =====
     const $=(s,r=document)=>r.querySelector(s);
     const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
     const qp=new URLSearchParams(location.search);
     const DEFAULTS={
-      STREAM_URL:"http://webcam.privcom.ch/mjpg/video.mjpg", // <— DEMO
+      STREAM_URL:"http://webcam.privcom.ch/mjpg/video.mjpg", // DEMO
       WS_URL:"ws://adresse_ESP32/ws",
       HTTP_BASE:"http://adresse_ESP32",
       LOGO_URL: "iut_univ_blanc.png",
       TEAM_TXT:"Groupe 2 Voiture RC"
     };
 
-    // Toast
+    // Simple guarded logger
+    const log=(...a)=>{ try{ console.debug("[IHM]",...a); }catch{} };
+
+    // Toast (queue simple)
     function notify(msg, level="err", actions=[]){
-      const wrap=$("#toast");
-      const el=document.createElement("div");
-      el.className=`toast ${level}`;
-      const btns = actions.map(a=>`<button data-act="${a.id||'act'}">${a.label}</button>`).join("");
-      el.innerHTML=`<span>${msg}</span><span>${btns}</span>`;
-      wrap.appendChild(el);
-      actions.forEach(a=>{
-        const b = el.querySelector(`button[data-act="${a.id||'act'}"]`);
-        if(b) b.addEventListener("click", ()=>{ try{ a.onClick?.(); }catch{}; el.remove(); });
-      });
-      setTimeout(()=>{ try{ el.remove(); }catch{}; }, Math.max(3500, 1500 + msg.length*25));
+      try{
+        const wrap=$("#toast"); if(!wrap) return;
+        const el=document.createElement("div");
+        el.className=`toast ${level}`;
+        const btns = actions.map(a=>`<button data-act="${a.id||'act'}">${a.label}</button>`).join("");
+        el.innerHTML=`<span>${msg}</span><span>${btns}</span>`;
+        wrap.appendChild(el);
+        actions.forEach(a=>{
+          const b = el.querySelector(`button[data-act="${a.id||'act'}"]`);
+          if(b) b.addEventListener("click", ()=>{ try{ a.onClick?.(); }catch{}; try{ el.remove(); }catch{}; });
+        });
+        setTimeout(()=>{ try{ el.remove(); }catch{}; }, Math.max(3500, 1500 + msg.length*25));
+      }catch{}
     }
 
     const param = (key, fallback)=> qp.get(key) || fallback;
@@ -421,14 +426,19 @@
 
     // Header
     const logoEl=$("#logo"), teamEl=$("#team");
-    logoEl.src = param("logo", DEFAULTS.LOGO_URL);
-    logoEl.addEventListener("error", ()=>{ if(!logoEl.dataset.fallback){ logoEl.dataset.fallback="1"; logoEl.src="iut_univ_blanc.png"; }});
-    teamEl.textContent = "Équipe : " + decodeURIComponent(param("team", encodeURIComponent(DEFAULTS.TEAM_TXT)));
+    if(logoEl){
+      logoEl.src = param("logo", DEFAULTS.LOGO_URL);
+      logoEl.addEventListener("error", ()=>{ if(!logoEl.dataset.fallback){ logoEl.dataset.fallback="1"; logoEl.src="iut_univ_blanc.png"; }});
+    }
+    if(teamEl){
+      teamEl.textContent = "Équipe : " + decodeURIComponent(param("team", encodeURIComponent(DEFAULTS.TEAM_TXT)));
+    }
 
     // Tabs
     const tabFull=$("#tabFull"), tabCam=$("#tabCam"), tabHelp=$("#tabHelp");
     const viewFull=$("#view-full"), viewCam=$("#view-cam"), viewHelp=$("#view-help");
     function setView(v){
+      if(!viewFull||!viewCam||!viewHelp||!tabFull||!tabCam||!tabHelp) return;
       const isFull = v==="full", isCam = v==="cam", isHelp = v==="help";
       viewFull.classList.toggle("active", isFull);
       viewCam.classList.toggle("active", isCam);
@@ -439,31 +449,33 @@
       const url=new URL(location.href); url.searchParams.set("view", v); history.replaceState(null,"",url);
       if(isCam){ attemptVideoFullscreen(); }
     }
-    setView(param("view","full"));
-    tabFull.addEventListener("click", ()=>setView("full"));
-    tabCam.addEventListener("click",  ()=>setView("cam"));
-    tabHelp.addEventListener("click", ()=>setView("help"));
+    try{
+      setView(param("view","full"));
+      tabFull?.addEventListener("click", ()=>setView("full"));
+      tabCam ?.addEventListener("click", ()=>setView("cam"));
+      tabHelp?.addEventListener("click", ()=>setView("help"));
+    }catch(e){ log("tabs init error", e); }
 
     // ===== Mode UI
     const btnMode = $("#btnMode");
     function setUIMode(mode){
       const isMobile = (mode === "mobile");
       document.body.classList.toggle("mobile-mode", isMobile);
-      btnMode.textContent = isMobile ? "Mode desktop" : "Mode mobile";
+      if(btnMode) btnMode.textContent = isMobile ? "Mode desktop" : "Mode mobile";
       const url=new URL(location.href);
       url.searchParams.set("mode", isMobile ? "mobile" : "desktop");
       history.replaceState(null,"",url);
       try{ localStorage.setItem("uiMode", isMobile ? "mobile":"desktop"); }catch{}
     }
     (function initMode(){
-      const fromQP = qp.get("mode");
-      if(fromQP){ setUIMode(fromQP); return; }
       try{
+        const fromQP = qp.get("mode");
+        if(fromQP){ setUIMode(fromQP); return; }
         const saved = localStorage.getItem("uiMode");
         if(saved) setUIMode(saved);
-      }catch{}
+      }catch(e){ log("mode init error", e); }
     })();
-    btnMode.addEventListener("click", ()=>{
+    btnMode?.addEventListener("click", ()=>{
       const isMobile = document.body.classList.contains("mobile-mode");
       setUIMode(isMobile ? "desktop" : "mobile");
     });
@@ -483,12 +495,15 @@
     setStream(streamDefault);
 
     function setStream(url){
-      imgFull.src = url; imgCam.src = url;
-      streamUrl.value = url; streamUrlCam.value = url;
+      if(imgFull) imgFull.src = url;
+      if(imgCam)  imgCam.src = url;
+      if(streamUrl)     streamUrl.value = url;
+      if(streamUrlCam)  streamUrlCam.value = url;
       clearStreamError(true); clearStreamError(false);
     }
     function reloadImg(img){
       try{
+        if(!img || !img.src) return;
         const u=new URL(img.src, location.href);
         u.searchParams.set("_", Date.now());
         img.src=u.toString();
@@ -496,13 +511,13 @@
     }
     function showStreamError(full, message){
       const wrap = full ? streamFullWrap : streamCamWrap;
-      wrap.classList.add("error");
+      wrap?.classList.add("error");
       const alert = full ? $("#alertFull") : $("#alertCam");
-      alert.firstChild.textContent = message || "Flux vidéo indisponible.";
+      if(alert && alert.firstChild) alert.firstChild.textContent = message || "Flux vidéo indisponible.";
     }
     function clearStreamError(full){
       const wrap = full ? streamFullWrap : streamCamWrap;
-      wrap.classList.remove("error");
+      wrap?.classList.remove("error");
     }
     function updateFPS(){
       const now=performance.now();
@@ -510,55 +525,58 @@
         const dt = (now-_lastFrameAt)/1000;
         const fps = 1/dt;
         _fpsAvg = _fpsAvg*0.8 + fps*0.2;
-        if(fpsBadge) fpsBadge.textContent = "FPS " + Math.max(0,Math.round(_fpsAvg)).toString().padStart(2,"0");
-        fpsBadge.className="badge " + (_fpsAvg>20?"ok":_fpsAvg>10?"warn":"err");
+        if(fpsBadge) {
+          fpsBadge.textContent = "FPS " + Math.max(0,Math.round(_fpsAvg)).toString().padStart(2,"0");
+          fpsBadge.className="badge " + (_fpsAvg>20?"ok":_fpsAvg>10?"warn":"err");
+        }
       }
       _lastFrameAt=now;
     }
-    imgFull.addEventListener("load", ()=>{ clearStreamError(true); updateFPS(); });
-    imgCam.addEventListener("load",  ()=> clearStreamError(false));
-    imgFull.addEventListener("error", ()=>{
+    imgFull?.addEventListener("load", ()=>{ clearStreamError(true); updateFPS(); });
+    imgCam ?.addEventListener("load", ()=> clearStreamError(false));
+    imgFull?.addEventListener("error", ()=>{
       showStreamError(true, "Flux vidéo indisponible (URL invalide, caméra arrêtée ou réseau HS).");
       notify("Erreur flux vidéo (vue complète). Vérifiez l’URL ou la connexion.", "err", [{id:"r",label:"Réessayer",onClick:()=>reloadImg(imgFull)}]);
     });
-    imgCam.addEventListener("error", ()=>{
+    imgCam ?.addEventListener("error", ()=>{
       showStreamError(false, "Flux vidéo indisponible (URL invalide, caméra arrêtée ou réseau HS).");
       notify("Erreur flux vidéo (vue caméra). Vérifiez l’URL ou la connexion.", "err", [{id:"r",label:"Réessayer",onClick:()=>reloadImg(imgCam)}]);
     });
-    applyStream.addEventListener("click", ()=>{
-      const u=(streamUrl.value||"").trim();
+    applyStream?.addEventListener("click", ()=>{
+      const u=(streamUrl?.value||"").trim();
       if(u){ setStream(u); } else { notify("URL de flux vide.", "warn"); }
     });
-    reloadStream.addEventListener("click", ()=> reloadImg(imgFull));
-    applyStreamCam.addEventListener("click", ()=>{
-      const u=(streamUrlCam.value||"").trim();
+    reloadStream?.addEventListener("click", ()=> reloadImg(imgFull));
+    applyStreamCam?.addEventListener("click", ()=>{
+      const u=(streamUrlCam?.value||"").trim();
       if(u){ setStream(u); } else { notify("URL de flux vide.", "warn"); }
     });
-    reloadStreamCam.addEventListener("click", ()=> reloadImg(imgCam));
-    retryFull.addEventListener("click", ()=> reloadImg(imgFull));
-    retryCam.addEventListener("click",  ()=> reloadImg(imgCam));
+    reloadStreamCam?.addEventListener("click", ()=> reloadImg(imgCam));
+    retryFull?.addEventListener("click", ()=> reloadImg(imgFull));
+    retryCam ?.addEventListener("click", ()=> reloadImg(imgCam));
 
     function disconnectStream(img, full){
-      try{ img.src = ""; }catch{}
+      try{ if(img) img.src = ""; }catch{}
       const wrap  = full ? streamFullWrap : streamCamWrap;
       const alert = full ? $("#alertFull") : $("#alertCam");
-      if (wrap)  wrap.classList.add("error");
-      if (alert) alert.firstChild.textContent = "Flux déconnecté par l’utilisateur.";
+      wrap?.classList.add("error");
+      if(alert && alert.firstChild) alert.firstChild.textContent = "Flux déconnecté par l’utilisateur.";
       notify("Flux vidéo déconnecté.", "warn");
     }
-    if (btnDisconnectStream)    btnDisconnectStream.addEventListener("click", ()=> disconnectStream(imgFull, true));
-    if (btnDisconnectStreamCam) btnDisconnectStreamCam.addEventListener("click", ()=> disconnectStream(imgCam,  false));
+    btnDisconnectStream   ?.addEventListener("click", ()=> disconnectStream(imgFull, true));
+    btnDisconnectStreamCam?.addEventListener("click", ()=> disconnectStream(imgCam,  false));
 
     // Ajustement vidéo
     const cardVideo=$("#cardVideo"), btnFit=$("#btnFit");
-    btnFit.addEventListener("click", ()=>{
-      cardVideo.classList.toggle("fit-fill");
-      btnFit.textContent = "Ajustement: " + (cardVideo.classList.contains("fit-fill")?"Fill":"Contain");
+    btnFit?.addEventListener("click", ()=>{
+      cardVideo?.classList.toggle("fit-fill");
+      if(btnFit) btnFit.textContent = "Ajustement: " + (cardVideo?.classList.contains("fit-fill")?"Fill":"Contain");
     });
 
     // Snapshot (si CORS ok)
-    $("#btnSnapshot").addEventListener("click", async ()=>{
+    $("#btnSnapshot")?.addEventListener("click", async ()=>{
       try{
+        if(!imgFull) throw 0;
         const canvas=document.createElement("canvas");
         canvas.width=imgFull.naturalWidth||1280; canvas.height=imgFull.naturalHeight||720;
         const ctx=canvas.getContext("2d");
@@ -574,9 +592,9 @@
     });
 
     // Onglet cam seul
-    $("#openCamOnly").addEventListener("click", ()=>{
-      const u = (streamUrl.value||DEFAULTS.STREAM_URL).trim();
-      const url = `${location.pathname}?view=cam&stream=${encodeURIComponent(u)}&logo=${encodeURIComponent(logoEl.src)}&team=${encodeURIComponent(teamEl.textContent.replace(/^Équipe :\s*/,''))}`;
+    $("#openCamOnly")?.addEventListener("click", ()=>{
+      const u = (streamUrl?.value||DEFAULTS.STREAM_URL).trim();
+      const url = `${location.pathname}?view=cam&stream=${encodeURIComponent(u)}&logo=${encodeURIComponent(logoEl?.src||DEFAULTS.LOGO_URL)}&team=${encodeURIComponent((teamEl?.textContent||'').replace(/^Équipe :\s*/,''))}`;
       window.open(url, "_blank");
     });
 
@@ -586,23 +604,17 @@
     const btnPing=$("#btnPing"), btnStop=$("#btnStop");
     const wsDot=$("#wsDot"), wsStatus=$("#wsStatus");
 
-    (()=>{ 
-      if(typeof wsStatus === "undefined"){ 
-        window.wsStatus = document.getElementById("wsStatus"); 
-      }
-    })();
-
-    wsUrlEl.value = param("ws", DEFAULTS.WS_URL);
-    httpBaseEl.value = param("http", DEFAULTS.HTTP_BASE);
+    wsUrlEl && (wsUrlEl.value = param("ws", DEFAULTS.WS_URL));
+    httpBaseEl && (httpBaseEl.value = param("http", DEFAULTS.HTTP_BASE));
 
     let ws=null, reconnectTry=0, reconnectTimer=null;
     let lastPingAt = null, heartbeatTimer=null;
 
     const setWsStatus=(open,txt,level)=>{
-      wsDot.classList.remove("warn","ok");
-      wsDot.classList.toggle("ok",!!open);
-      if(level==="warn") wsDot.classList.add("warn");
-      wsStatus.textContent=txt || (open?"connecté":"déconnecté");
+      wsDot?.classList.remove("warn","ok");
+      wsDot?.classList.toggle("ok",!!open);
+      if(level==="warn") wsDot?.classList.add("warn");
+      if(wsStatus) wsStatus.textContent=txt || (open?"connecté":"déconnecté");
     };
 
     function scheduleReconnect(){
@@ -623,43 +635,47 @@
     function stopHeartbeat(){ if(heartbeatTimer){ clearInterval(heartbeatTimer); heartbeatTimer=null; } }
 
     function connectWS(){
-      const url=wsUrlEl.value.trim();
-      if(!/^wss?:\/\//i.test(url)){
-        notify("URL WebSocket invalide (ex: ws://192.168.4.1/ws)", "warn");
-        return;
-      }
-      try{ if(ws&&ws.readyState===WebSocket.OPEN) ws.close(); }catch{}
-      setWsStatus(false,"connexion…","warn");
-      try{ ws=new WebSocket(url); }
-      catch(e){ notify("Échec d’ouverture WebSocket.", "err"); setWsStatus(false,"erreur"); scheduleReconnect(); return; }
+      try{
+        const url=(wsUrlEl?.value||"").trim();
+        if(!/^wss?:\/\//i.test(url)){
+          notify("URL WebSocket invalide (ex: ws://192.168.4.1/ws)", "warn");
+          return;
+        }
+        try{ if(ws&&ws.readyState===WebSocket.OPEN) ws.close(); }catch{}
+        setWsStatus(false,"connexion…","warn");
+        ws=new WebSocket(url);
 
-      ws.addEventListener("open", ()=>{ setWsStatus(true,"connecté"); notify("WebSocket connectée.", "ok"); reconnectTry=0; startHeartbeat(); });
-      ws.addEventListener("close",()=>{ setWsStatus(false,"déconnecté"); notify("WebSocket déconnectée.", "warn"); stopHeartbeat(); scheduleReconnect(); });
-      ws.addEventListener("error",()=>{ setWsStatus(false,"erreur"); notify("Erreur WebSocket (réseau / serveur).", "err"); });
+        ws.addEventListener("open", ()=>{ setWsStatus(true,"connecté"); notify("WebSocket connectée.", "ok"); reconnectTry=0; startHeartbeat(); });
+        ws.addEventListener("close",()=>{ setWsStatus(false,"déconnecté"); notify("WebSocket déconnectée.", "warn"); stopHeartbeat(); scheduleReconnect(); });
+        ws.addEventListener("error",()=>{ setWsStatus(false,"erreur"); notify("Erreur WebSocket (réseau / serveur).", "err"); });
 
-      // Réception télémétrie
-      ws.addEventListener("message",(ev)=>{
-        try{
-          let payload = {};
-          try{ const obj = JSON.parse(ev.data); if(obj && typeof obj === "object") payload = obj; }
-          catch{
-            const s = String(ev.data).trim();
-            const mSpd = s.match(/^SPD\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
-            const mBat = s.match(/^BATT\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
-            const mPing= s.match(/^PING\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
-            if(mSpd) payload.speed = parseFloat(mSpd[1]);
-            if(mBat) payload.battery = parseFloat(mBat[1]);
-            if(mPing) payload.ping = parseFloat(mPing[1]);
-            if(/^PONG(?:[:\s]\d+)?$/i.test(s) && lastPingAt!=null){
-              const rtt = Math.round(performance.now() - lastPingAt);
-              updatePing(rtt); lastPingAt=null;
+        ws.addEventListener("message",(ev)=>{
+          try{
+            let payload = {};
+            try{ const obj = JSON.parse(ev.data); if(obj && typeof obj === "object") payload = obj; }
+            catch{
+              const s = String(ev.data).trim();
+              const mSpd = s.match(/^SPD\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
+              const mBat = s.match(/^BATT\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
+              const mPing= s.match(/^PING\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
+              if(mSpd) payload.speed = parseFloat(mSpd[1]);
+              if(mBat) payload.battery = parseFloat(mBat[1]);
+              if(mPing) payload.ping = parseFloat(mPing[1]);
+              if(/^PONG(?:[:\s]\d+)?$/i.test(s) && lastPingAt!=null){
+                const rtt = Math.round(performance.now() - lastPingAt);
+                updatePing(rtt); lastPingAt=null;
+              }
             }
-          }
-          if("speed" in payload)   updateSpeed(payload.speed);
-          if("battery" in payload) updateBattery(payload.battery);
-          if("ping" in payload)    updatePing(payload.ping);
-        }catch{}
-      });
+            if("speed" in payload)   updateSpeed(payload.speed);
+            if("battery" in payload) updateBattery(payload.battery);
+            if("ping" in payload)    updatePing(payload.ping);
+          }catch(e){ log("ws message parse error", e); }
+        });
+      }catch(e){
+        notify("Échec d’ouverture WebSocket.", "err");
+        setWsStatus(false,"erreur");
+        scheduleReconnect();
+      }
     }
     function disconnectWS(){
       try{ if(ws) ws.close(); }catch{}
@@ -668,7 +684,7 @@
       notify("WebSocket déconnectée.", "warn");
     }
     async function sendOverHTTP(cmd){
-      const base=httpBaseEl.value.trim().replace(/\/+$/,"");
+      const base=(httpBaseEl?.value||"").trim().replace(/\/+$/,"");
       if(!/^https?:\/\//i.test(base)){ notify("Base HTTP invalide (ex: http://192.168.4.1)", "warn"); return; }
       try{
         const res = await fetch(`${base}/cmd?c=${encodeURIComponent(cmd)}`,{cache:"no-store"});
@@ -684,20 +700,21 @@
       } else {
         sendOverHTTP(cmd);
       }
+      // Feedback pédales
       if(cmd==="F") setThrottle(1), setBrake(0);
       else if(cmd==="B") setBrake(1), setThrottle(0);
       else if(cmd==="S") setBrake(1), decayBrakeSoon();
     }
-    $("#btnConnect").addEventListener("click", connectWS);
-    $("#btnDisconnect").addEventListener("click", disconnectWS);
-    $("#btnPing").addEventListener("click", ()=>{
+    btnConnect   ?.addEventListener("click", connectWS);
+    btnDisconnect?.addEventListener("click", disconnectWS);
+    btnPing      ?.addEventListener("click", ()=>{
       if(ws && ws.readyState===WebSocket.OPEN){
         lastPingAt = performance.now(); try{ ws.send("PING"); }catch{}
       }else{
         notify("WS non connecté : impossible de mesurer le ping (RTT).", "warn");
       }
     });
-    $("#btnStop").addEventListener("click", ()=> sendCommand("S"));
+    btnStop      ?.addEventListener("click", ()=> sendCommand("S"));
 
     // ===== Plein écran CONTAINER + Wake Lock
     const btnFS=$("#btnFS"), btnReload=$("#btnReload");
@@ -706,13 +723,11 @@
       if (el.requestFullscreen) { el.requestFullscreen().catch(()=>{}); return; }
       if (el.webkitRequestFullscreen) { try{ el.webkitRequestFullscreen(); }catch{} }
     }
-    if(btnFS){
-      btnFS.addEventListener("click", ()=>{
-        requestFullscreenOn(document.getElementById("streamCamWrap"));
-        enableWakeLock();
-      });
-    }
-    if(btnReload){ btnReload.addEventListener("click", ()=> reloadImg(imgCam)); }
+    btnFS?.addEventListener("click", ()=>{
+      requestFullscreenOn(document.getElementById("streamCamWrap"));
+      enableWakeLock();
+    });
+    btnReload?.addEventListener("click", ()=> reloadImg(imgCam));
 
     let wakeLock=null;
     async function enableWakeLock(){
@@ -803,6 +818,55 @@
       setTimeout(()=> setBrake(0.0), 180);
     }
 
+    // ===== Batterie segments
+    const battVal = $("#battVal"), battValCam = $("#battValCam");
+    const battPack = $("#battPack"), battPackCam = $("#battPackCam");
+
+    function setCells(pack, pct) {
+      if (!pack) return;
+      const cells = Array.from(pack.querySelectorAll(".cell"));
+      const lit = Math.round((pct / 100) * cells.length);
+      const ratio = pct / 100;
+
+      cells.forEach((c, idx) => {
+        c.className = "cell";
+        if (idx < lit) {
+          if (ratio < 0.2) c.classList.add("low");
+          else if (ratio < 0.5) c.classList.add("mid");
+          else c.classList.add("on");
+        }
+      });
+
+      if (pct < 10) {
+        pack.classList.add("blink");
+        cells.forEach((c, idx) => {
+          if (idx < lit) c.style.background = "#ef4444";
+          else c.style.background = "#1e293b";
+        });
+      } else {
+        pack.classList.remove("blink");
+        cells.forEach((c) => (c.style.background = ""));
+      }
+    }
+
+    function updateBattery(pct){
+      if(!Number.isFinite(pct)) return;
+      const n = clamp(pct, 0, 100);
+      if(battVal)    battVal.textContent = String(Math.round(n));
+      if(battValCam) battValCam.textContent = String(Math.round(n));
+      setCells(battPack,n); setCells(battPackCam,n);
+    }
+
+    // ===== Ping badge
+    const pingBadge=$("#pingBadge"), pingBadgeCam=$("#pingBadgeCam");
+    function updatePing(ms){
+      if(!Number.isFinite(ms)) return;
+      const n = Math.max(0, Math.round(ms));
+      const cls = n<60?"ping-ok":(n<150?"ping-warn":"ping-err");
+      if(pingBadge){ pingBadge.className="ping-badge "+cls; pingBadge.textContent="Ping "+n+"ms"; }
+      if(pingBadgeCam){ pingBadgeCam.className="ping-badge "+cls; pingBadgeCam.textContent="Ping "+n+"ms"; }
+    }
+
     // ===== Indicateur touches + contrôle clavier (AZERTY via event.key)
     const keyEls={ArrowUp:$("#kUp"), ArrowLeft:$("#kLeft"), ArrowDown:$("#kDown"), ArrowRight:$("#kRight"), Space:$("#kSpace")};
     const pressed=new Set();
@@ -831,12 +895,11 @@
 
     window.addEventListener("keydown",(e)=>{
       const cmd = keyToCmd(e); if(!cmd) return;
-      if(!viewFull.classList.contains("active")) return;
+      if(!viewFull?.classList.contains("active")) return;
       const id = (e.key||"").toLowerCase();
       e.preventDefault(); if(pressed.has(id)) return; pressed.add(id);
 
-      // Highlight flèches / espace seulement (pas de badge ZQSD)
-      if(e.key==="ArrowUp")   keyEls.ArrowUp?.classList.add("on");
+      if(e.key==="ArrowUp")   keyEls.ArrowUp  ?.classList.add("on");
       if(e.key==="ArrowLeft") keyEls.ArrowLeft?.classList.add("on");
       if(e.key==="ArrowDown") keyEls.ArrowDown?.classList.add("on");
       if(e.key==="ArrowRight")keyEls.ArrowRight?.classList.add("on");
@@ -847,11 +910,11 @@
 
     window.addEventListener("keyup",(e)=>{
       const cmd = keyToCmd(e); if(!cmd) return;
-      if(!viewFull.classList.contains("active")) return;
+      if(!viewFull?.classList.contains("active")) return;
       const id = (e.key||"").toLowerCase();
       e.preventDefault(); pressed.delete(id);
 
-      if(e.key==="ArrowUp")   keyEls.ArrowUp?.classList.remove("on");
+      if(e.key==="ArrowUp")   keyEls.ArrowUp  ?.classList.remove("on");
       if(e.key==="ArrowLeft") keyEls.ArrowLeft?.classList.remove("on");
       if(e.key==="ArrowDown") keyEls.ArrowDown?.classList.remove("on");
       if(e.key==="ArrowRight")keyEls.ArrowRight?.classList.remove("on");
@@ -927,12 +990,12 @@
 
     // Raccourci F pour plein écran vidéo (vue cam)
     document.addEventListener("keydown",(e)=>{
-      if(e.key.toLowerCase()==="f" && viewCam.classList.contains("active")){
+      if((e.key||"").toLowerCase()==="f" && viewCam?.classList.contains("active")){
         requestFullscreenOn(document.getElementById("streamCamWrap"));
       }
     });
 
-    // Debug rapide
+    // Debug rapide : double-clic HUD pour simuler
     $("#hudFull")?.addEventListener("dblclick", ()=>{
       updateSpeed(Math.random()*25);
       updateBattery(Math.random()*100);
@@ -940,6 +1003,9 @@
       setThrottle(Math.random());
       setBrake(Math.random());
     });
+
+    log("IHM prêt", {DEMO});
+  })();
   </script>
 </body>
 </html>
