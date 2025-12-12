@@ -198,7 +198,6 @@
           Flux vidéo
           <span class="badge" id="fpsBadge" title="Images/seconde estimées">FPS --</span>
           <button id="btnFit" class="link" style="margin-left:auto">Ajustement: Contain</button>
-          <button id="btnSnapshot" class="link">Snapshot</button>
         </h2>
         <div class="content">
           <div class="status">
@@ -394,9 +393,9 @@
     const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
     const qp=new URLSearchParams(location.search);
     const DEFAULTS={
-      STREAM_URL:"http://webcam.privcom.ch/mjpg/video.mjpg", // DEMO
+      STREAM_URL:"http://192.168.1.29/stream", // DEMO
       WS_URL:"ws://adresse_ESP32/ws",
-      HTTP_BASE:"http://adresse_ESP32",
+      HTTP_BASE:"http://192.168.1.250",
       LOGO_URL: "iut_univ_blanc.png",
       TEAM_TXT:"Groupe 2 Voiture RC"
     };
@@ -571,24 +570,6 @@
     btnFit?.addEventListener("click", ()=>{
       cardVideo?.classList.toggle("fit-fill");
       if(btnFit) btnFit.textContent = "Ajustement: " + (cardVideo?.classList.contains("fit-fill")?"Fill":"Contain");
-    });
-
-    // Snapshot (si CORS ok)
-    $("#btnSnapshot")?.addEventListener("click", async ()=>{
-      try{
-        if(!imgFull) throw 0;
-        const canvas=document.createElement("canvas");
-        canvas.width=imgFull.naturalWidth||1280; canvas.height=imgFull.naturalHeight||720;
-        const ctx=canvas.getContext("2d");
-        ctx.drawImage(imgFull,0,0,canvas.width,canvas.height);
-        const a=document.createElement("a");
-        a.href=canvas.toDataURL("image/png");
-        a.download=`snapshot_${new Date().toISOString().replace(/[:.]/g,'-')}.png`;
-        a.click();
-        notify("Snapshot enregistré.", "ok");
-      }catch{
-        notify("Snapshot impossible (CORS). Essayez depuis le même domaine que la caméra.", "warn");
-      }
     });
 
     // Onglet cam seul
@@ -871,6 +852,12 @@
     const keyEls={ArrowUp:$("#kUp"), ArrowLeft:$("#kLeft"), ArrowDown:$("#kDown"), ArrowRight:$("#kRight"), Space:$("#kSpace")};
     const pressed=new Set();
 
+    // 🔒 Empêche les commandes clavier lorsqu'on tape dans un champ texte
+    function isTypingInInput() {
+      const active = document.activeElement;
+      return active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA");
+    }
+
     function keyToCmd(evt){
       const k=(evt.key||"").toLowerCase();
       if(k==="arrowup" || k==="z") return "F";
@@ -894,6 +881,8 @@
     }
 
     window.addEventListener("keydown",(e)=>{
+      if (isTypingInInput()) return; // ⛔ pas de commandes si focus dans un input
+
       const cmd = keyToCmd(e); if(!cmd) return;
       if(!viewFull?.classList.contains("active")) return;
       const id = (e.key||"").toLowerCase();
@@ -909,6 +898,8 @@
     },{passive:false});
 
     window.addEventListener("keyup",(e)=>{
+      if (isTypingInInput()) return; // ⛔ idem à la remontée de la touche
+
       const cmd = keyToCmd(e); if(!cmd) return;
       if(!viewFull?.classList.contains("active")) return;
       const id = (e.key||"").toLowerCase();
@@ -981,8 +972,8 @@
       setInterval(()=>{
         const t=performance.now()/1000;
         updateSpeed( 12 + 10*Math.sin(t*1.2) + 2*Math.cos(t*0.4) );
-        updateBattery( 60 + 40*Math.sin(t*0.05) );
-        updatePing( 40 + 40*(1+Math.sin(t*0.8)) );
+        updateBattery( 0 + 100*Math.sin(t*0.05) );
+        updatePing( 10 + 40*(1+Math.sin(t*0.8)) );
         setThrottle( Math.max(0, Math.sin(t*0.8)*0.6) );
         setBrake( Math.max(0, Math.cos(t*0.6)*0.4) );
       }, 300);
