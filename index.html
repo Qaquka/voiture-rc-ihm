@@ -12,58 +12,111 @@
       --radius:16px;
     }
     *{ box-sizing:border-box; }
-    html,body{ margin:0; height:100%; background:linear-gradient(180deg,#0b1220,var(--bg)); color:var(--text);
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,"Noto Sans"; }
+    html,body{
+      margin:0; height:100%;
+      background:linear-gradient(180deg,#0b1220,var(--bg));
+      color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,"Noto Sans";
+    }
+
     header{
       position:sticky; top:0; z-index:5;
       display:flex; align-items:center; gap:12px; padding:10px 12px;
-      background:rgba(255,255,255,.04); border-bottom:1px solid rgba(255,255,255,.08); backdrop-filter: blur(6px);
+      background:rgba(255,255,255,.04);
+      border-bottom:1px solid rgba(255,255,255,.08);
+      backdrop-filter: blur(6px);
     }
     header img.logo{ height:44px; width:auto; border-radius:8px; background:rgba(255,255,255,.04); padding:4px; }
     .title{ display:flex; flex-direction:column; line-height:1.15; }
     .title h1{ margin:0; font-size:1.02rem; }
     .title small{ color:var(--muted); }
     .tabs{ margin-left:auto; display:flex; gap:8px; flex-wrap:wrap; }
-    .tabbtn, .modebtn{
-      background:#0b1220; color:var(--text); border:1px solid rgba(255,255,255,.16);
-      padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:600; }
+    .tabbtn{
+      background:#0b1220; color:var(--text);
+      border:1px solid rgba(255,255,255,.16);
+      padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:600;
+    }
     .tabbtn.active{ border-color:var(--accent); outline:2px solid var(--accent); }
-    .modebtn{ margin-left:8px; white-space:nowrap; }
+
     main{ max-width:1100px; margin:14px auto 18px; padding:0 12px; }
-    .card{ background:linear-gradient(180deg,var(--panel),#0b1220); border:1px solid rgba(255,255,255,.08);
-      border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
-    .card h2{ margin:0; padding:12px 14px; font-size:1rem; font-weight:600; background:rgba(255,255,255,.04);
-      border-bottom:1px solid rgba(255,255,255,.08); display:flex; align-items:center; gap:10px;}
+    .card{
+      background:linear-gradient(180deg,var(--panel),#0b1220);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .card h2{
+      margin:0; padding:12px 14px;
+      font-size:1rem; font-weight:600;
+      background:rgba(255,255,255,.04);
+      border-bottom:1px solid rgba(255,255,255,.08);
+      display:flex; align-items:center; gap:10px;
+    }
     .badge{ font-size:.75rem; padding:3px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.14); color:#fff; }
     .badge.ok{ background:rgba(16,185,129,.2); border-color:rgba(16,185,129,.6); }
     .badge.warn{ background:rgba(245,158,11,.2); border-color:rgba(245,158,11,.6); }
     .badge.err{ background:rgba(239,68,68,.2); border-color:rgba(239,68,68,.6); }
+
     .card .content{ padding:14px; }
     .row{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
-    input[type="text"]{ background:#0b1220; border:1px solid rgba(255,255,255,.16); color:var(--text);
-      border-radius:10px; padding:10px 12px; min-width:220px; outline:none; }
-    button.link{ background:#0b1220; color:var(--text); border:1px solid rgba(255,255,255,.2);
-      padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:600; }
+
+    input[type="text"]{
+      background:#0b1220; border:1px solid rgba(255,255,255,.16); color:var(--text);
+      border-radius:10px; padding:10px 12px; min-width:220px; outline:none;
+    }
+    button.link{
+      background:#0b1220; color:var(--text);
+      border:1px solid rgba(255,255,255,.2);
+      padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:600;
+    }
     button.link.primary{ border-color:var(--accent); }
     button.link.danger{ border-color:var(--danger); }
+
     .status{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:8px; color:var(--muted); }
     .dot{ width:10px; height:10px; border-radius:999px; background:var(--danger); box-shadow:0 0 0 2px rgba(0,0,0,.3) inset; }
     .dot.ok{ background:var(--brand); }
     .dot.warn{ background:var(--warn); }
     .muted{ color:var(--muted); }
-    .stream{ width:100%; aspect-ratio:16/9; background:#000; border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,.08); position:relative; }
+
+    .stream{
+      width:100%;
+      aspect-ratio:16/9;
+      background:#000;
+      border-radius:12px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.08);
+      position:relative;
+    }
     .stream img{ width:100%; height:100%; object-fit:contain; display:block; background:#000; }
     .fit-fill .stream img{ object-fit:cover; }
-    .stream .alert{ position:absolute; inset:auto 8px 8px 8px; background:rgba(239,68,68,.95); color:#fff;
-      border-radius:10px; padding:10px 12px; font-size:.9rem; display:none; }
+    .stream .alert{
+      position:absolute; inset:auto 8px 8px 8px;
+      background:rgba(239,68,68,.95); color:#fff;
+      border-radius:10px; padding:10px 12px; font-size:.9rem; display:none;
+    }
     .stream.error .alert{ display:block; }
+
     .meta{ display:flex; gap:12px; flex-wrap:wrap; color:var(--muted); font-size:.92rem; }
     .tag{ padding:4px 8px; border:1px solid rgba(255,255,255,.08); border-radius:999px; }
 
     /* Grille commandes */
-    .controls{ display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:12px; max-width:420px; margin:auto; }
-    .btn{ user-select:none; cursor:pointer; text-align:center; border-radius:14px; padding:14px 12px; background:#111827;
-      border:1px solid rgba(255,255,255,.1); box-shadow:var(--shadow); font-weight:600; transition: transform .05s ease, border-color .2s ease; }
+    .controls{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap:12px;
+      max-width:420px;
+      margin:auto;
+    }
+    .btn{
+      user-select:none; cursor:pointer; text-align:center;
+      border-radius:14px; padding:14px 12px;
+      background:#111827;
+      border:1px solid rgba(255,255,255,.1);
+      box-shadow:var(--shadow);
+      font-weight:600;
+      transition: transform .05s ease, border-color .2s ease;
+    }
     .btn:active,.btn.down{ transform: scale(.98); outline:2px solid var(--accent); border-color:var(--accent); }
     .btn[data-dir="stop"]{ grid-column:1/-1; background:#1f2937; }
 
@@ -77,41 +130,41 @@
     .stream:-webkit-full-screen{ width:100vw; height:100vh; border-radius:0; border:none; background:#000; }
     .stream:-webkit-full-screen img{ width:100%; height:100%; object-fit:contain; background:#000; }
 
-    .foot{ text-align:center; padding:10px; color:var(--muted); font-size:.85rem;
-      border-top:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.03); }
+    .foot{
+      text-align:center; padding:10px;
+      color:var(--muted); font-size:.85rem;
+      border-top:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.03);
+    }
 
     /* Toasts */
-    #toast{ position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
-      display: grid; gap: 8px; z-index: 9999; width: min(92vw, 520px); }
-    .toast{ border-radius: 12px; padding: 10px 12px; background: rgba(17,24,39,.95); color: #fff;
-      border: 1px solid rgba(255,255,255,.12); box-shadow: var(--shadow); font-size: .95rem;
-      display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    #toast{
+      position: fixed; bottom: 14px; left: 50%;
+      transform: translateX(-50%);
+      display: grid; gap: 8px; z-index: 9999;
+      width: min(92vw, 520px);
+    }
+    .toast{
+      border-radius: 12px; padding: 10px 12px;
+      background: rgba(17,24,39,.95); color: #fff;
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: var(--shadow); font-size: .95rem;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    }
     .toast.ok{ background: rgba(16,185,129,.95); }
     .toast.warn{ background: rgba(245,158,11,.95); }
     .toast.err{ background: rgba(239,68,68,.95); }
-    .toast button{ background: rgba(255,255,255,.15); border: none; color: #fff; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
-
-    /* MODE MOBILE */
-    body.mobile-mode header{ padding:8px 10px; }
-    body.mobile-mode header img.logo{ height:36px; padding:3px; }
-    body.mobile-mode .title h1{ font-size:.95rem; }
-    body.mobile-mode .title small{ font-size:.8rem; }
-    body.mobile-mode main{ max-width:100%; padding:0 8px; margin:10px auto 14px; }
-    body.mobile-mode .card h2{ padding:10px 12px; font-size:.95rem; }
-    body.mobile-mode .card .content{ padding:10px; }
-    body.mobile-mode .row{ gap:8px; }
-    body.mobile-mode #view-full .row input[type="text"]{ display:none; }
-    body.mobile-mode #view-full #openCamOnly{ display:none; }
-    body.mobile-mode #view-cam .row input[type="text"]{ display:none; }
-    body.mobile-mode #view-full .stream{ aspect-ratio:auto; height: calc(100vh - 300px); }
-    body.mobile-mode #view-cam .stream{ height: calc(100vh - 200px); }
-    body.mobile-mode .tabbtn, body-mobile-mode .modebtn, body-mobile-mode button.link{ padding:10px 14px; border-radius:12px; }
-    body.mobile-mode .btn{ padding:18px 14px; font-size:1.05rem; }
+    .toast button{
+      background: rgba(255,255,255,.15);
+      border: none; color: #fff;
+      padding: 6px 10px; border-radius: 8px; cursor: pointer;
+    }
 
     /* ========= HUD (overlay) ========= */
     .hud{
       position:absolute; bottom:0; left:0; right:0;
-      background:rgba(0,0,0,.45); border-top:1px solid rgba(255,255,255,.18);
+      background:rgba(0,0,0,.45);
+      border-top:1px solid rgba(255,255,255,.18);
       color:#fff; padding:10px 14px; font-weight:700; z-index:3;
 
       display:grid;
@@ -121,10 +174,6 @@
     .hud-left{ justify-self:start; display:flex; align-items:center; }
     .hud-center{ justify-self:center; }
     .hud-right{ justify-self:end; display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
-
-    .hud .label{ font-size:.85rem; opacity:.9; }
-    .hud .val{ font-size:1.15rem; line-height:1; }
-    .hud .unit{ font-size:.9rem; opacity:.9; }
 
     /* Vitesse numérique GROS (centrée) */
     .speedBig{
@@ -149,11 +198,16 @@
     .blink{ animation: blink 1s infinite; }
     @keyframes blink { 0%,60%{opacity:1} 61%,100%{opacity:.2} }
 
-    /* Ping badge */
-    .ping-badge{ padding:3px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.18); font-size:.85rem; }
-    .ping-ok{ background:rgba(16,185,129,.18); border-color:rgba(16,185,129,.55); }
-    .ping-warn{ background:rgba(245,158,11,.18); border-color:rgba(245,158,11,.55); }
-    .ping-err{ background:rgba(239,68,68,.18); border-color:rgba(239,68,68,.55); }
+    /* Statut HTTP */
+    .http-badge{
+      padding:3px 8px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.18);
+      font-size:.85rem;
+      background:rgba(56,189,248,.12);
+    }
+    .http-ok{ background:rgba(16,185,129,.18); border-color:rgba(16,185,129,.55); }
+    .http-warn{ background:rgba(245,158,11,.18); border-color:rgba(245,158,11,.55); }
+    .http-err{ background:rgba(239,68,68,.18); border-color:rgba(239,68,68,.55); }
 
     /* Barre touches actives */
     .keys{ display:flex; gap:6px; align-items:center; font-size:.9rem; color:var(--muted); }
@@ -169,9 +223,29 @@
     .fill.accel{ background:linear-gradient(90deg,#16a34a,#22c55e); }
     .fill.brake{ background:linear-gradient(90deg,#b91c1c,#ef4444); }
 
-    @media (max-width:640px){
+    /* ===== Responsive auto (plus de bouton mode) ===== */
+    @media (max-width: 900px){
+      main{ max-width:100%; padding:0 10px; margin:10px auto 14px; }
+      .card .content{ padding:12px; }
+      .btn{ padding:16px 14px; font-size:1.05rem; }
+    }
+    @media (max-width: 640px){
+      header{ padding:8px 10px; }
+      header img.logo{ height:36px; padding:3px; }
+      .title h1{ font-size:.95rem; }
+      .title small{ font-size:.8rem; }
+
+      #view-full .row input[type="text"]{ display:none; }
+      #view-full #openCamOnly{ display:none; }
+      #view-cam .row input[type="text"]{ display:none; }
+
+      #view-full .stream{ aspect-ratio:auto; height: calc(100vh - 280px); }
+      #view-cam .stream{ height: calc(100vh - 200px); }
+
       .hud{ grid-template-columns: 1fr auto; grid-auto-rows:auto; }
       .hud-right{ grid-column: 1 / -1; justify-self:center; }
+      .ped{ min-width:120px; }
+      .speedBig .num{ font-size:2.6rem; }
     }
   </style>
 </head>
@@ -186,7 +260,6 @@
       <button id="tabFull" class="tabbtn active" data-view="full">Contrôles + Caméra</button>
       <button id="tabCam" class="tabbtn" data-view="cam">Caméra seule</button>
       <button id="tabHelp" class="tabbtn" data-view="help">Aide</button>
-      <button id="btnMode" class="modebtn" title="Basculer l’affichage">Mode mobile</button>
     </div>
   </header>
 
@@ -201,13 +274,18 @@
         </h2>
         <div class="content">
           <div class="status">
-            <span>Statut :</span><span id="wsDot" class="dot"></span><span id="wsStatus">déconnecté</span>
+            <span>Statut :</span>
+            <span id="httpDot" class="dot"></span>
+            <span id="httpStatus">HTTP non configuré</span>
+            <span class="http-badge" id="httpBadge">—</span>
+
             <div class="keys" aria-label="Touches">
               <span class="key" id="kUp">↑</span><span class="key" id="kLeft">←</span>
               <span class="key" id="kDown">↓</span><span class="key" id="kRight">→</span>
               <span class="key" id="kSpace">␣</span>
             </div>
           </div>
+
           <div class="stream" id="streamFullWrap">
             <!-- === HUD FULL === -->
             <div class="hud" id="hudFull" aria-live="polite">
@@ -239,16 +317,17 @@
                   </div>
                   <span class="val" id="battVal">--</span><span class="unit">%</span>
                 </div>
-                <div class="rtt">
-                  <span class="ping-badge" id="pingBadge">Ping --ms</span>
-                </div>
               </div>
             </div>
             <!-- === /HUD FULL === -->
 
             <img id="imgFull" src="http://adresse_ESP32:81/stream" decoding="async" alt="Flux caméra ESP32 (MJPEG)">
-            <div class="alert" id="alertFull">Flux vidéo indisponible. Vérifiez l’URL, le réseau, ou redémarrez la caméra. <button id="retryFull" class="link" style="margin-left:8px">Réessayer</button></div>
+            <div class="alert" id="alertFull">
+              Flux vidéo indisponible. Vérifiez l’URL, le réseau, ou redémarrez la caméra.
+              <button id="retryFull" class="link" style="margin-left:8px">Réessayer</button>
+            </div>
           </div>
+
           <div class="row" style="margin-top:10px">
             <input id="streamUrl" type="text" value="http://adresse_ESP32:81/stream" aria-label="URL flux MJPEG">
             <button id="applyStream" class="link primary">Appliquer</button>
@@ -256,6 +335,7 @@
             <button id="disconnectStream" class="link danger">Déconnecter le flux</button>
             <button id="openCamOnly" class="link">Ouvrir la vue caméra seule (nouvel onglet)</button>
           </div>
+
           <div class="meta" style="margin-top:8px">
             <span class="tag">Touches: ↑ ↓ ← → ou ZQSD</span>
             <span class="tag">Espace = STOP</span>
@@ -266,14 +346,11 @@
       </div>
 
       <div class="card" style="margin-top:14px">
-        <h2>Contrôle de la voiture</h2>
+        <h2>Contrôle de la voiture (HTTP)</h2>
         <div class="content">
           <div class="row" style="margin-bottom:10px">
-            <input id="wsUrl" type="text" value="ws://adresse_ESP32/ws" aria-label="URL WebSocket">
             <input id="httpBase" type="text" value="http://adresse_ESP32" aria-label="Base HTTP">
-            <button id="btnConnect" class="link primary">Connexion </button>
-            <button id="btnDisconnect" class="link">Déconnexion</button>
-            <button id="btnPing" class="link">Ping</button>
+            <button id="btnTest" class="link">Test HTTP</button>
             <button id="btnStop" class="link danger">STOP</button>
           </div>
 
@@ -291,7 +368,7 @@
             <div></div>
           </div>
         </div>
-        <div class="foot">Fallback HTTP automatique si WS indisponible : <code>/cmd?c=F|B|L|R|S</code>.</div>
+        <div class="foot">Commandes HTTP : <code>/cmd?c=F|B|L|R|S</code>. Télémétrie (optionnel) : voir config JS en bas.</div>
       </div>
     </section>
 
@@ -308,6 +385,7 @@
               <button id="btnReload" class="link">Recharger</button>
             </div>
           </div>
+
           <div class="stream" id="streamCamWrap" style="margin-top:10px">
             <!-- === HUD CAM === -->
             <div class="hud" id="hudCam" aria-live="polite">
@@ -339,14 +417,15 @@
                   </div>
                   <span class="val" id="battValCam">--</span><span class="unit">%</span>
                 </div>
-                <div class="rtt">
-                  <span class="ping-badge" id="pingBadgeCam">Ping --ms</span>
-                </div>
               </div>
             </div>
             <!-- === /HUD CAM === -->
+
             <img id="imgCam" src="http://adresse_ESP32:81/stream" decoding="async" alt="Flux caméra ESP32 (MJPEG)">
-            <div class="alert" id="alertCam">Flux vidéo indisponible. Vérifiez l’URL, le réseau, ou redémarrez la caméra. <button id="retryCam" class="link" style="margin-left:8px">Réessayer</button></div>
+            <div class="alert" id="alertCam">
+              Flux vidéo indisponible. Vérifiez l’URL, le réseau, ou redémarrez la caméra.
+              <button id="retryCam" class="link" style="margin-left:8px">Réessayer</button>
+            </div>
           </div>
 
           <div class="row" style="margin-top:10px">
@@ -371,11 +450,10 @@
             <li>Dans l’onglet <em>Contrôles + Caméra</em>, entrez :
               <ul>
                 <li><strong>Flux MJPEG</strong> : ex. <code>http://192.168.4.1:81/stream</code>.</li>
-                <li><strong>WebSocket</strong> : ex. <code>ws://192.168.4.1/ws</code> (si disponible).</li>
-                <li><strong>Base HTTP</strong> : ex. <code>http://192.168.4.1</code> (fallback).</li>
+                <li><strong>Base HTTP</strong> : ex. <code>http://192.168.4.1</code>.</li>
               </ul>
             </li>
-            <li>Cliquez <strong>Connexion</strong> (facultatif). Sinon, les commandes passent en <em>HTTP</em> (GET <code>/cmd?c=F|B|L|R|S</code>).</li>
+            <li>Commandes : HTTP <code>/cmd?c=F|B|L|R|S</code>.</li>
             <li><strong>Contrôles</strong> : flèches ou ZQSD ; <code>Espace</code>=STOP. Maintenir pour mouvement continu.</li>
             <li>Pour une vue pilote sur smartphone : onglet <em>Caméra seule</em> → <em>Plein écran vidéo</em> + <em>Anti-veille</em>.</li>
           </ol>
@@ -388,22 +466,29 @@
 
   <script>
   (function(){
-    // ===== Helpers & defaults =====
     const $=(s,r=document)=>r.querySelector(s);
     const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
     const qp=new URLSearchParams(location.search);
+
     const DEFAULTS={
-      STREAM_URL:"http://192.168.1.29/stream", // DEMO
-      WS_URL:"ws://adresse_ESP32/ws",
+      STREAM_URL:"http://192.168.1.29/stream",
       HTTP_BASE:"http://192.168.1.250",
-      LOGO_URL: "iut_univ_blanc.png",
+      LOGO_URL:"iut_univ_blanc.png",
       TEAM_TXT:"Groupe 2 Voiture RC"
     };
 
-    // Simple guarded logger
-    const log=(...a)=>{ try{ console.debug("[IHM]",...a); }catch{} };
+    // ---- TÉLÉMÉTRIE HTTP (optionnel) ----
+    // 1) conseillé: GET {base}/telemetry -> JSON { speed: 12.3, battery: 87 }
+    // 2) fallback:  GET {base}/speed -> "12.3"  et GET {base}/battery -> "87"
+    const TELEMETRY = {
+      intervalMs: 700,             // fréquence polling
+      endpointJson: "/telemetry",  // si dispo
+      endpointSpeed: "/speed",     // sinon
+      endpointBattery: "/battery"  // sinon
+    };
 
-    // Toast (queue simple)
+    const log=(...a)=>{ try{ console.debug("[IHM]",...a);}catch{} };
+
     function notify(msg, level="err", actions=[]){
       try{
         const wrap=$("#toast"); if(!wrap) return;
@@ -437,8 +522,7 @@
     const tabFull=$("#tabFull"), tabCam=$("#tabCam"), tabHelp=$("#tabHelp");
     const viewFull=$("#view-full"), viewCam=$("#view-cam"), viewHelp=$("#view-help");
     function setView(v){
-      if(!viewFull||!viewCam||!viewHelp||!tabFull||!tabCam||!tabHelp) return;
-      const isFull = v==="full", isCam = v==="cam", isHelp = v==="help";
+      const isFull=v==="full", isCam=v==="cam", isHelp=v==="help";
       viewFull.classList.toggle("active", isFull);
       viewCam.classList.toggle("active", isCam);
       viewHelp.classList.toggle("active", isHelp);
@@ -448,56 +532,30 @@
       const url=new URL(location.href); url.searchParams.set("view", v); history.replaceState(null,"",url);
       if(isCam){ attemptVideoFullscreen(); }
     }
-    try{
-      setView(param("view","full"));
-      tabFull?.addEventListener("click", ()=>setView("full"));
-      tabCam ?.addEventListener("click", ()=>setView("cam"));
-      tabHelp?.addEventListener("click", ()=>setView("help"));
-    }catch(e){ log("tabs init error", e); }
+    setView(param("view","full"));
+    tabFull.addEventListener("click", ()=>setView("full"));
+    tabCam .addEventListener("click", ()=>setView("cam"));
+    tabHelp.addEventListener("click", ()=>setView("help"));
 
-    // ===== Mode UI
-    const btnMode = $("#btnMode");
-    function setUIMode(mode){
-      const isMobile = (mode === "mobile");
-      document.body.classList.toggle("mobile-mode", isMobile);
-      if(btnMode) btnMode.textContent = isMobile ? "Mode desktop" : "Mode mobile";
-      const url=new URL(location.href);
-      url.searchParams.set("mode", isMobile ? "mobile" : "desktop");
-      history.replaceState(null,"",url);
-      try{ localStorage.setItem("uiMode", isMobile ? "mobile":"desktop"); }catch{}
-    }
-    (function initMode(){
-      try{
-        const fromQP = qp.get("mode");
-        if(fromQP){ setUIMode(fromQP); return; }
-        const saved = localStorage.getItem("uiMode");
-        if(saved) setUIMode(saved);
-      }catch(e){ log("mode init error", e); }
-    })();
-    btnMode?.addEventListener("click", ()=>{
-      const isMobile = document.body.classList.contains("mobile-mode");
-      setUIMode(isMobile ? "desktop" : "mobile");
-    });
-
-    // ===== Streams
+    // Streams
     const imgFull=$("#imgFull"), imgCam=$("#imgCam");
     const streamUrl=$("#streamUrl"), streamUrlCam=$("#streamUrlCam");
     const applyStream=$("#applyStream"), reloadStream=$("#reloadStream");
     const applyStreamCam=$("#applyStreamCam"), reloadStreamCam=$("#reloadStreamCam");
     const streamFullWrap=$("#streamFullWrap"), streamCamWrap=$("#streamCamWrap");
     const retryFull=$("#retryFull"), retryCam=$("#retryCam");
-    const btnDisconnectStream = $("#disconnectStream");
-    const btnDisconnectStreamCam = $("#disconnectStreamCam");
+    const btnDisconnectStream=$("#disconnectStream");
+    const btnDisconnectStreamCam=$("#disconnectStreamCam");
     const fpsBadge=$("#fpsBadge"); let _lastFrameAt=null, _fpsAvg=0;
 
-    const streamDefault = param("stream", DEMO?DEFAULTS.STREAM_URL:DEFAULTS.STREAM_URL);
+    const streamDefault = param("stream", DEFAULTS.STREAM_URL);
     setStream(streamDefault);
 
     function setStream(url){
-      if(imgFull) imgFull.src = url;
-      if(imgCam)  imgCam.src = url;
-      if(streamUrl)     streamUrl.value = url;
-      if(streamUrlCam)  streamUrlCam.value = url;
+      if(imgFull) imgFull.src=url;
+      if(imgCam)  imgCam.src=url;
+      if(streamUrl) streamUrl.value=url;
+      if(streamUrlCam) streamUrlCam.value=url;
       clearStreamError(true); clearStreamError(false);
     }
     function reloadImg(img){
@@ -510,243 +568,150 @@
     }
     function showStreamError(full, message){
       const wrap = full ? streamFullWrap : streamCamWrap;
-      wrap?.classList.add("error");
+      wrap.classList.add("error");
       const alert = full ? $("#alertFull") : $("#alertCam");
       if(alert && alert.firstChild) alert.firstChild.textContent = message || "Flux vidéo indisponible.";
     }
     function clearStreamError(full){
       const wrap = full ? streamFullWrap : streamCamWrap;
-      wrap?.classList.remove("error");
+      wrap.classList.remove("error");
     }
     function updateFPS(){
       const now=performance.now();
       if(_lastFrameAt!=null){
-        const dt = (now-_lastFrameAt)/1000;
-        const fps = 1/dt;
-        _fpsAvg = _fpsAvg*0.8 + fps*0.2;
-        if(fpsBadge) {
-          fpsBadge.textContent = "FPS " + Math.max(0,Math.round(_fpsAvg)).toString().padStart(2,"0");
-          fpsBadge.className="badge " + (_fpsAvg>20?"ok":_fpsAvg>10?"warn":"err");
-        }
+        const dt=(now-_lastFrameAt)/1000;
+        const fps=1/dt;
+        _fpsAvg=_fpsAvg*0.8+fps*0.2;
+        fpsBadge.textContent="FPS "+Math.max(0,Math.round(_fpsAvg)).toString().padStart(2,"0");
+        fpsBadge.className="badge "+(_fpsAvg>20?"ok":_fpsAvg>10?"warn":"err");
       }
       _lastFrameAt=now;
     }
-    imgFull?.addEventListener("load", ()=>{ clearStreamError(true); updateFPS(); });
-    imgCam ?.addEventListener("load", ()=> clearStreamError(false));
-    imgFull?.addEventListener("error", ()=>{
+
+    imgFull.addEventListener("load", ()=>{ clearStreamError(true); updateFPS(); });
+    imgCam .addEventListener("load", ()=>  clearStreamError(false));
+
+    imgFull.addEventListener("error", ()=>{
       showStreamError(true, "Flux vidéo indisponible (URL invalide, caméra arrêtée ou réseau HS).");
-      notify("Erreur flux vidéo (vue complète). Vérifiez l’URL ou la connexion.", "err", [{id:"r",label:"Réessayer",onClick:()=>reloadImg(imgFull)}]);
+      notify("Erreur flux vidéo (vue complète).", "err", [{id:"r",label:"Réessayer",onClick:()=>reloadImg(imgFull)}]);
     });
-    imgCam ?.addEventListener("error", ()=>{
+    imgCam.addEventListener("error", ()=>{
       showStreamError(false, "Flux vidéo indisponible (URL invalide, caméra arrêtée ou réseau HS).");
-      notify("Erreur flux vidéo (vue caméra). Vérifiez l’URL ou la connexion.", "err", [{id:"r",label:"Réessayer",onClick:()=>reloadImg(imgCam)}]);
+      notify("Erreur flux vidéo (vue caméra).", "err", [{id:"r",label:"Réessayer",onClick:()=>reloadImg(imgCam)}]);
     });
-    applyStream?.addEventListener("click", ()=>{
-      const u=(streamUrl?.value||"").trim();
-      if(u){ setStream(u); } else { notify("URL de flux vide.", "warn"); }
+
+    applyStream.addEventListener("click", ()=>{
+      const u=(streamUrl.value||"").trim();
+      if(u) setStream(u); else notify("URL de flux vide.", "warn");
     });
-    reloadStream?.addEventListener("click", ()=> reloadImg(imgFull));
-    applyStreamCam?.addEventListener("click", ()=>{
-      const u=(streamUrlCam?.value||"").trim();
-      if(u){ setStream(u); } else { notify("URL de flux vide.", "warn"); }
+    reloadStream.addEventListener("click", ()=>reloadImg(imgFull));
+
+    applyStreamCam.addEventListener("click", ()=>{
+      const u=(streamUrlCam.value||"").trim();
+      if(u) setStream(u); else notify("URL de flux vide.", "warn");
     });
-    reloadStreamCam?.addEventListener("click", ()=> reloadImg(imgCam));
-    retryFull?.addEventListener("click", ()=> reloadImg(imgFull));
-    retryCam ?.addEventListener("click", ()=> reloadImg(imgCam));
+    reloadStreamCam.addEventListener("click", ()=>reloadImg(imgCam));
+
+    retryFull.addEventListener("click", ()=>reloadImg(imgFull));
+    retryCam .addEventListener("click", ()=>reloadImg(imgCam));
 
     function disconnectStream(img, full){
-      try{ if(img) img.src = ""; }catch{}
+      try{ img.src=""; }catch{}
       const wrap  = full ? streamFullWrap : streamCamWrap;
       const alert = full ? $("#alertFull") : $("#alertCam");
-      wrap?.classList.add("error");
-      if(alert && alert.firstChild) alert.firstChild.textContent = "Flux déconnecté par l’utilisateur.";
+      wrap.classList.add("error");
+      if(alert && alert.firstChild) alert.firstChild.textContent="Flux déconnecté par l’utilisateur.";
       notify("Flux vidéo déconnecté.", "warn");
     }
-    btnDisconnectStream   ?.addEventListener("click", ()=> disconnectStream(imgFull, true));
-    btnDisconnectStreamCam?.addEventListener("click", ()=> disconnectStream(imgCam,  false));
+    btnDisconnectStream.addEventListener("click", ()=>disconnectStream(imgFull,true));
+    btnDisconnectStreamCam.addEventListener("click", ()=>disconnectStream(imgCam,false));
 
     // Ajustement vidéo
     const cardVideo=$("#cardVideo"), btnFit=$("#btnFit");
-    btnFit?.addEventListener("click", ()=>{
-      cardVideo?.classList.toggle("fit-fill");
-      if(btnFit) btnFit.textContent = "Ajustement: " + (cardVideo?.classList.contains("fit-fill")?"Fill":"Contain");
+    btnFit.addEventListener("click", ()=>{
+      cardVideo.classList.toggle("fit-fill");
+      btnFit.textContent="Ajustement: "+(cardVideo.classList.contains("fit-fill")?"Fill":"Contain");
     });
 
-    // Onglet cam seul
-    $("#openCamOnly")?.addEventListener("click", ()=>{
-      const u = (streamUrl?.value||DEFAULTS.STREAM_URL).trim();
-      const url = `${location.pathname}?view=cam&stream=${encodeURIComponent(u)}&logo=${encodeURIComponent(logoEl?.src||DEFAULTS.LOGO_URL)}&team=${encodeURIComponent((teamEl?.textContent||'').replace(/^Équipe :\s*/,''))}`;
-      window.open(url, "_blank");
+    // Ouvrir cam only
+    $("#openCamOnly").addEventListener("click", ()=>{
+      const u=(streamUrl.value||DEFAULTS.STREAM_URL).trim();
+      const hb=(($("#httpBase").value||DEFAULTS.HTTP_BASE).trim());
+      const url = `${location.pathname}?view=cam&stream=${encodeURIComponent(u)}&http=${encodeURIComponent(hb)}&logo=${encodeURIComponent(logoEl?.src||DEFAULTS.LOGO_URL)}&team=${encodeURIComponent((teamEl?.textContent||'').replace(/^Équipe :\s*/,''))}`;
+      window.open(url,"_blank");
     });
 
-    // ===== WebSocket + HTTP fallback + reconnexion
-    const wsUrlEl=$("#wsUrl"), httpBaseEl=$("#httpBase");
-    const btnConnect=$("#btnConnect"), btnDisconnect=$("#btnDisconnect");
-    const btnPing=$("#btnPing"), btnStop=$("#btnStop");
-    const wsDot=$("#wsDot"), wsStatus=$("#wsStatus");
-
-    wsUrlEl && (wsUrlEl.value = param("ws", DEFAULTS.WS_URL));
-    httpBaseEl && (httpBaseEl.value = param("http", DEFAULTS.HTTP_BASE));
-
-    let ws=null, reconnectTry=0, reconnectTimer=null;
-    let lastPingAt = null, heartbeatTimer=null;
-
-    const setWsStatus=(open,txt,level)=>{
-      wsDot?.classList.remove("warn","ok");
-      wsDot?.classList.toggle("ok",!!open);
-      if(level==="warn") wsDot?.classList.add("warn");
-      if(wsStatus) wsStatus.textContent=txt || (open?"connecté":"déconnecté");
-    };
-
-    function scheduleReconnect(){
-      if(DEMO) return;
-      if(reconnectTimer) return;
-      const delay = Math.min(8000, 500 * Math.pow(2, reconnectTry++));
-      reconnectTimer = setTimeout(()=>{ reconnectTimer=null; connectWS(); }, delay);
-      notify("Tentative de reconnexion WS dans " + Math.round(delay/1000) + "s…", "warn");
-    }
-
-    function startHeartbeat(){
-      stopHeartbeat();
-      heartbeatTimer = setInterval(()=>{
-        if(!ws || ws.readyState!==WebSocket.OPEN) return;
-        try{ lastPingAt = performance.now(); ws.send("PING"); }catch{}
-      }, 5000);
-    }
-    function stopHeartbeat(){ if(heartbeatTimer){ clearInterval(heartbeatTimer); heartbeatTimer=null; } }
-
-    function connectWS(){
-      try{
-        const url=(wsUrlEl?.value||"").trim();
-        if(!/^wss?:\/\//i.test(url)){
-          notify("URL WebSocket invalide (ex: ws://192.168.4.1/ws)", "warn");
-          return;
-        }
-        try{ if(ws&&ws.readyState===WebSocket.OPEN) ws.close(); }catch{}
-        setWsStatus(false,"connexion…","warn");
-        ws=new WebSocket(url);
-
-        ws.addEventListener("open", ()=>{ setWsStatus(true,"connecté"); notify("WebSocket connectée.", "ok"); reconnectTry=0; startHeartbeat(); });
-        ws.addEventListener("close",()=>{ setWsStatus(false,"déconnecté"); notify("WebSocket déconnectée.", "warn"); stopHeartbeat(); scheduleReconnect(); });
-        ws.addEventListener("error",()=>{ setWsStatus(false,"erreur"); notify("Erreur WebSocket (réseau / serveur).", "err"); });
-
-        ws.addEventListener("message",(ev)=>{
-          try{
-            let payload = {};
-            try{ const obj = JSON.parse(ev.data); if(obj && typeof obj === "object") payload = obj; }
-            catch{
-              const s = String(ev.data).trim();
-              const mSpd = s.match(/^SPD\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
-              const mBat = s.match(/^BATT\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
-              const mPing= s.match(/^PING\s*:\s*([+-]?\d+(?:\.\d+)?)$/i);
-              if(mSpd) payload.speed = parseFloat(mSpd[1]);
-              if(mBat) payload.battery = parseFloat(mBat[1]);
-              if(mPing) payload.ping = parseFloat(mPing[1]);
-              if(/^PONG(?:[:\s]\d+)?$/i.test(s) && lastPingAt!=null){
-                const rtt = Math.round(performance.now() - lastPingAt);
-                updatePing(rtt); lastPingAt=null;
-              }
-            }
-            if("speed" in payload)   updateSpeed(payload.speed);
-            if("battery" in payload) updateBattery(payload.battery);
-            if("ping" in payload)    updatePing(payload.ping);
-          }catch(e){ log("ws message parse error", e); }
-        });
-      }catch(e){
-        notify("Échec d’ouverture WebSocket.", "err");
-        setWsStatus(false,"erreur");
-        scheduleReconnect();
-      }
-    }
-    function disconnectWS(){
-      try{ if(ws) ws.close(); }catch{}
-      stopHeartbeat();
-      setWsStatus(false,"déconnecté");
-      notify("WebSocket déconnectée.", "warn");
-    }
-    async function sendOverHTTP(cmd){
-      const base=(httpBaseEl?.value||"").trim().replace(/\/+$/,"");
-      if(!/^https?:\/\//i.test(base)){ notify("Base HTTP invalide (ex: http://192.168.4.1)", "warn"); return; }
-      try{
-        const res = await fetch(`${base}/cmd?c=${encodeURIComponent(cmd)}`,{cache:"no-store"});
-        if(!res.ok){ notify(`HTTP ${res.status} lors de l'envoi de la commande.`, "warn"); }
-        else{ notify("Commande envoyée (HTTP).", "ok"); }
-      }catch{
-        notify("Erreur réseau HTTP (commande non envoyée).", "err");
-      }
-    }
-    function sendCommand(cmd){
-      if(ws&&ws.readyState===WebSocket.OPEN){
-        try{ ws.send(cmd); }catch{ notify("Échec envoi WS, bascule HTTP.", "warn"); sendOverHTTP(cmd); }
-      } else {
-        sendOverHTTP(cmd);
-      }
-      // Feedback pédales
-      if(cmd==="F") setThrottle(1), setBrake(0);
-      else if(cmd==="B") setBrake(1), setThrottle(0);
-      else if(cmd==="S") setBrake(1), decayBrakeSoon();
-    }
-    btnConnect   ?.addEventListener("click", connectWS);
-    btnDisconnect?.addEventListener("click", disconnectWS);
-    btnPing      ?.addEventListener("click", ()=>{
-      if(ws && ws.readyState===WebSocket.OPEN){
-        lastPingAt = performance.now(); try{ ws.send("PING"); }catch{}
-      }else{
-        notify("WS non connecté : impossible de mesurer le ping (RTT).", "warn");
-      }
-    });
-    btnStop      ?.addEventListener("click", ()=> sendCommand("S"));
-
-    // ===== Plein écran CONTAINER + Wake Lock
-    const btnFS=$("#btnFS"), btnReload=$("#btnReload");
+    // ===== Plein écran + Wake Lock
+    const btnFS=$("#btnFS"), btnReload=$("#btnReload"), btnWake=$("#btnWake");
     function requestFullscreenOn(el){
       if(!el) return;
-      if (el.requestFullscreen) { el.requestFullscreen().catch(()=>{}); return; }
-      if (el.webkitRequestFullscreen) { try{ el.webkitRequestFullscreen(); }catch{} }
+      if(el.requestFullscreen) { el.requestFullscreen().catch(()=>{}); return; }
+      if(el.webkitRequestFullscreen) { try{ el.webkitRequestFullscreen(); }catch{} }
     }
-    btnFS?.addEventListener("click", ()=>{
+    btnFS.addEventListener("click", ()=>{
       requestFullscreenOn(document.getElementById("streamCamWrap"));
       enableWakeLock();
     });
-    btnReload?.addEventListener("click", ()=> reloadImg(imgCam));
+    btnReload.addEventListener("click", ()=>reloadImg(imgCam));
+    btnWake.addEventListener("click", ()=>enableWakeLock(true));
 
     let wakeLock=null;
-    async function enableWakeLock(){
+    async function enableWakeLock(fromBtn=false){
       try{
         if(!wakeLock){
           wakeLock = await navigator.wakeLock.request("screen");
-          notify("Anti-veille activé (si supporté).", "ok");
+          if(fromBtn) notify("Anti-veille activé (si supporté).", "ok");
           wakeLock.addEventListener("release", ()=>{ wakeLock=null; notify("Anti-veille relâché.", "warn"); });
         }
-      }catch{/* non supporté */}
+      }catch{
+        if(fromBtn) notify("Anti-veille non supporté par ce navigateur.", "warn");
+      }
     }
-    async function attemptVideoFullscreen(fromButton=false){
-      const wrap = document.getElementById("streamCamWrap");
+    async function attemptVideoFullscreen(){
+      const wrap=document.getElementById("streamCamWrap");
       if(!wrap) return;
       try{
-        if(document.fullscreenElement !== wrap){
-          if (wrap.requestFullscreen) { await wrap.requestFullscreen(); }
-          else if (wrap.webkitRequestFullscreen) { wrap.webkitRequestFullscreen(); }
-          if(!fromButton) notify("Plein écran (HUD) demandé.", "ok");
+        if(document.fullscreenElement!==wrap){
+          if(wrap.requestFullscreen) await wrap.requestFullscreen();
+          else if(wrap.webkitRequestFullscreen) wrap.webkitRequestFullscreen();
         }
       }catch{}
       enableWakeLock();
     }
 
-    // ====== VITESSE + Batterie + Ping
-    const speedValBig = $("#speedValBig");
-    const speedValCam = $("#speedValCam");
-    let _speedDisp = 0;
-    function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+    // ===== UI Telemetry (speed/batt) =====
+    const speedValBig=$("#speedValBig");
+    const speedValCam=$("#speedValCam");
+    const battVal=$("#battVal"), battValCam=$("#battValCam");
+    const battPack=$("#battPack"), battPackCam=$("#battPackCam");
+
+    const httpDot=$("#httpDot"), httpStatus=$("#httpStatus"), httpBadge=$("#httpBadge");
+    const httpBaseEl=$("#httpBase");
+    httpBaseEl.value = param("http", DEFAULTS.HTTP_BASE);
+
+    function setHttpState(state, txt){
+      // state: ok|warn|err
+      httpDot.classList.remove("ok","warn");
+      httpBadge.classList.remove("http-ok","http-warn","http-err");
+      if(state==="ok"){ httpDot.classList.add("ok"); httpBadge.classList.add("http-ok"); }
+      else if(state==="warn"){ httpDot.classList.add("warn"); httpBadge.classList.add("http-warn"); }
+      else { httpBadge.classList.add("http-err"); }
+      httpStatus.textContent = txt || "—";
+      httpBadge.textContent = state.toUpperCase();
+    }
+
+    function clamp(n,min,max){ return Math.max(min, Math.min(max,n)); }
+
+    let _speedDisp=0;
     function setSpeedDisplay(v){
-      const n = clamp(v, 0, 999);
-      _speedDisp = n;
-      if(speedValBig) speedValBig.textContent = Math.round(n).toString();
-      if(speedValCam) speedValCam.textContent = n.toFixed(1);
+      const n=clamp(v,0,999);
+      _speedDisp=n;
+      speedValBig.textContent = String(Math.round(n));
+      speedValCam.textContent = n.toFixed(1);
     }
     function updateSpeed(v){
       const target = Number.isFinite(v) ? v : 0;
-      const frames = 5;
+      const frames=5;
       let i=0; const start=_speedDisp; const delta=target-start;
       (function step(){
         i++; setSpeedDisplay(start + delta*(i/frames));
@@ -754,110 +719,169 @@
       })();
     }
 
-    // ====== Pédales
-    const accelFill = $("#accelFill");
-    const brakeFill = $("#brakeFill");
-    const accelFillCam = $("#accelFillCam");
-    const brakeFillCam = $("#brakeFillCam");
+    function setCells(pack, pct){
+      if(!pack) return;
+      const cells=Array.from(pack.querySelectorAll(".cell"));
+      const lit=Math.round((pct/100)*cells.length);
+      const ratio=pct/100;
+      cells.forEach((c,idx)=>{
+        c.className="cell";
+        if(idx<lit){
+          if(ratio<0.2) c.classList.add("low");
+          else if(ratio<0.5) c.classList.add("mid");
+          else c.classList.add("on");
+        }
+      });
+      if(pct<10){
+        pack.classList.add("blink");
+        cells.forEach((c,idx)=>{ c.style.background = idx<lit ? "#ef4444" : "#1e293b"; });
+      }else{
+        pack.classList.remove("blink");
+        cells.forEach(c=>c.style.background="");
+      }
+    }
+    function updateBattery(pct){
+      if(!Number.isFinite(pct)) return;
+      const n=clamp(pct,0,100);
+      battVal.textContent=String(Math.round(n));
+      battValCam.textContent=String(Math.round(n));
+      setCells(battPack,n); setCells(battPackCam,n);
+    }
 
-    let _accel=0, _brake=0, _decayRAF=null;
+    // ===== Pédales (barres)
+    const accelFill=$("#accelFill"), brakeFill=$("#brakeFill");
+    const accelFillCam=$("#accelFillCam"), brakeFillCam=$("#brakeFillCam");
+    let _accel=0,_brake=0,_decayRAF=null;
 
     function drawBars(){
-      const aPct = Math.round(clamp(_accel,0,1)*100);
-      const bPct = Math.round(clamp(_brake,0,1)*100);
-      if(accelFill) accelFill.style.width = aPct+"%";
-      if(brakeFill) brakeFill.style.width = bPct+"%";
-      if(accelFillCam) accelFillCam.style.width = aPct+"%";
-      if(brakeFillCam) brakeFillCam.style.width = bPct+"%";
-    }
-    function setThrottle(v){
-      _accel = clamp(v,0,1);
-      if(_accel>0) _brake=0;
-      drawBars();
-      startDecay();
-    }
-    function setBrake(v){
-      _brake = clamp(v,0,1);
-      if(_brake>0) _accel=0;
-      drawBars();
-      startDecay();
+      const aPct=Math.round(clamp(_accel,0,1)*100);
+      const bPct=Math.round(clamp(_brake,0,1)*100);
+      accelFill.style.width=aPct+"%";
+      brakeFill.style.width=bPct+"%";
+      accelFillCam.style.width=aPct+"%";
+      brakeFillCam.style.width=bPct+"%";
     }
     function startDecay(){
       if(_decayRAF) return;
-      const decay = ()=>{
+      const decay=()=>{
         let changed=false;
         const step=0.02;
         if(_accel>0){ _accel=Math.max(0,_accel-step); changed=true; }
         if(_brake>0){ _brake=Math.max(0,_brake-step); changed=true; }
         if(changed){ drawBars(); _decayRAF=requestAnimationFrame(decay); }
-        else { _decayRAF=null; }
+        else _decayRAF=null;
       };
       _decayRAF=requestAnimationFrame(decay);
+    }
+    function setThrottle(v){
+      _accel=clamp(v,0,1);
+      if(_accel>0) _brake=0;
+      drawBars(); startDecay();
+    }
+    function setBrake(v){
+      _brake=clamp(v,0,1);
+      if(_brake>0) _accel=0;
+      drawBars(); startDecay();
     }
     function decayBrakeSoon(){
       setTimeout(()=> setBrake(0.6), 10);
       setTimeout(()=> setBrake(0.0), 180);
     }
 
-    // ===== Batterie segments
-    const battVal = $("#battVal"), battValCam = $("#battValCam");
-    const battPack = $("#battPack"), battPackCam = $("#battPackCam");
-
-    function setCells(pack, pct) {
-      if (!pack) return;
-      const cells = Array.from(pack.querySelectorAll(".cell"));
-      const lit = Math.round((pct / 100) * cells.length);
-      const ratio = pct / 100;
-
-      cells.forEach((c, idx) => {
-        c.className = "cell";
-        if (idx < lit) {
-          if (ratio < 0.2) c.classList.add("low");
-          else if (ratio < 0.5) c.classList.add("mid");
-          else c.classList.add("on");
+    // ===== HTTP commands
+    async function sendOverHTTP(cmd, silent=false){
+      const base=(httpBaseEl.value||"").trim().replace(/\/+$/,"");
+      if(!/^https?:\/\//i.test(base)){
+        if(!silent) notify("Base HTTP invalide (ex: http://192.168.4.1)", "warn");
+        setHttpState("err","Base HTTP invalide");
+        return false;
+      }
+      try{
+        const res = await fetch(`${base}/cmd?c=${encodeURIComponent(cmd)}`, { cache:"no-store" });
+        if(!res.ok){
+          if(!silent) notify(`HTTP ${res.status} lors de l'envoi de la commande.`, "warn");
+          setHttpState("warn",`HTTP ${res.status}`);
+          return false;
         }
-      });
-
-      if (pct < 10) {
-        pack.classList.add("blink");
-        cells.forEach((c, idx) => {
-          if (idx < lit) c.style.background = "#ef4444";
-          else c.style.background = "#1e293b";
-        });
-      } else {
-        pack.classList.remove("blink");
-        cells.forEach((c) => (c.style.background = ""));
+        setHttpState("ok","HTTP OK");
+        return true;
+      }catch{
+        if(!silent) notify("Erreur réseau HTTP (commande non envoyée).", "err");
+        setHttpState("err","HTTP KO");
+        return false;
       }
     }
 
-    function updateBattery(pct){
-      if(!Number.isFinite(pct)) return;
-      const n = clamp(pct, 0, 100);
-      if(battVal)    battVal.textContent = String(Math.round(n));
-      if(battValCam) battValCam.textContent = String(Math.round(n));
-      setCells(battPack,n); setCells(battPackCam,n);
+    function sendCommand(cmd){
+      sendOverHTTP(cmd);
+      // Feedback barres
+      if(cmd==="F") setThrottle(1), setBrake(0);
+      else if(cmd==="B") setBrake(1), setThrottle(0);
+      else if(cmd==="S") setBrake(1), decayBrakeSoon();
     }
 
-    // ===== Ping badge
-    const pingBadge=$("#pingBadge"), pingBadgeCam=$("#pingBadgeCam");
-    function updatePing(ms){
-      if(!Number.isFinite(ms)) return;
-      const n = Math.max(0, Math.round(ms));
-      const cls = n<60?"ping-ok":(n<150?"ping-warn":"ping-err");
-      if(pingBadge){ pingBadge.className="ping-badge "+cls; pingBadge.textContent="Ping "+n+"ms"; }
-      if(pingBadgeCam){ pingBadgeCam.className="ping-badge "+cls; pingBadgeCam.textContent="Ping "+n+"ms"; }
+    $("#btnStop").addEventListener("click", ()=>sendCommand("S"));
+
+    $("#btnTest").addEventListener("click", async ()=>{
+      // petit test: envoie STOP silencieux + tente de lire télémétrie si dispo
+      await sendOverHTTP("S", true);
+      await pollTelemetryOnce(true);
+      notify("Test HTTP terminé.", "ok");
+    });
+
+    // ===== Télémetry polling (optionnel)
+    async function pollTelemetryOnce(silent=false){
+      const base=(httpBaseEl.value||"").trim().replace(/\/+$/,"");
+      if(!/^https?:\/\//i.test(base)) return;
+
+      // 1) JSON
+      try{
+        const r = await fetch(base + TELEMETRY.endpointJson, { cache:"no-store" });
+        if(r.ok){
+          const j = await r.json();
+          if(Number.isFinite(j.speed)) updateSpeed(j.speed);
+          if(Number.isFinite(j.battery)) updateBattery(j.battery);
+          return;
+        }
+      }catch{}
+
+      // 2) fallback speed + battery (texte)
+      try{
+        const rs = await fetch(base + TELEMETRY.endpointSpeed, { cache:"no-store" });
+        if(rs.ok){
+          const t = parseFloat((await rs.text()).trim());
+          if(Number.isFinite(t)) updateSpeed(t);
+        }
+      }catch{}
+      try{
+        const rb = await fetch(base + TELEMETRY.endpointBattery, { cache:"no-store" });
+        if(rb.ok){
+          const t = parseFloat((await rb.text()).trim());
+          if(Number.isFinite(t)) updateBattery(t);
+        }
+      }catch{
+        if(!silent) { /* rien */ }
+      }
     }
 
-    // ===== Indicateur touches + contrôle clavier (AZERTY via event.key)
+    let telemTimer=null;
+    function startTelemetry(){
+      stopTelemetry();
+      if(DEMO) return;
+      telemTimer = setInterval(()=>pollTelemetryOnce(true), TELEMETRY.intervalMs);
+      pollTelemetryOnce(true);
+    }
+    function stopTelemetry(){ if(telemTimer){ clearInterval(telemTimer); telemTimer=null; } }
+    httpBaseEl.addEventListener("change", ()=>{ startTelemetry(); });
+
+    // ===== Indicateur touches + contrôle clavier
     const keyEls={ArrowUp:$("#kUp"), ArrowLeft:$("#kLeft"), ArrowDown:$("#kDown"), ArrowRight:$("#kRight"), Space:$("#kSpace")};
     const pressed=new Set();
 
-    // 🔒 Empêche les commandes clavier lorsqu'on tape dans un champ texte
-    function isTypingInInput() {
-      const active = document.activeElement;
-      return active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA");
+    function isTypingInInput(){
+      const a=document.activeElement;
+      return a && (a.tagName==="INPUT" || a.tagName==="TEXTAREA");
     }
-
     function keyToCmd(evt){
       const k=(evt.key||"").toLowerCase();
       if(k==="arrowup" || k==="z") return "F";
@@ -869,131 +893,107 @@
     }
 
     function sendDirFromKey(evt, down){
-      const cmd = keyToCmd(evt); if(!cmd) return;
+      const cmd=keyToCmd(evt); if(!cmd) return;
       if(cmd==="S"){ sendCommand("S"); setBrake(1); return; }
       if(down){
         if(cmd==="F") setThrottle(1);
         if(cmd==="B") setBrake(1);
         sendCommand(cmd);
-      } else {
+      }else{
         sendCommand("S");
       }
     }
 
     window.addEventListener("keydown",(e)=>{
-      if (isTypingInInput()) return; // ⛔ pas de commandes si focus dans un input
+      if(isTypingInInput()) return;
+      const cmd=keyToCmd(e); if(!cmd) return;
+      if(!viewFull.classList.contains("active")) return;
 
-      const cmd = keyToCmd(e); if(!cmd) return;
-      if(!viewFull?.classList.contains("active")) return;
-      const id = (e.key||"").toLowerCase();
+      const id=(e.key||"").toLowerCase();
       e.preventDefault(); if(pressed.has(id)) return; pressed.add(id);
 
-      if(e.key==="ArrowUp")   keyEls.ArrowUp  ?.classList.add("on");
-      if(e.key==="ArrowLeft") keyEls.ArrowLeft?.classList.add("on");
-      if(e.key==="ArrowDown") keyEls.ArrowDown?.classList.add("on");
-      if(e.key==="ArrowRight")keyEls.ArrowRight?.classList.add("on");
-      if(e.key===" "){ keyEls.Space?.classList.add("on"); }
+      if(e.key==="ArrowUp") keyEls.ArrowUp.classList.add("on");
+      if(e.key==="ArrowLeft") keyEls.ArrowLeft.classList.add("on");
+      if(e.key==="ArrowDown") keyEls.ArrowDown.classList.add("on");
+      if(e.key==="ArrowRight") keyEls.ArrowRight.classList.add("on");
+      if(e.key===" ") keyEls.Space.classList.add("on");
 
       sendDirFromKey(e,true);
     },{passive:false});
 
     window.addEventListener("keyup",(e)=>{
-      if (isTypingInInput()) return; // ⛔ idem à la remontée de la touche
+      if(isTypingInInput()) return;
+      const cmd=keyToCmd(e); if(!cmd) return;
+      if(!viewFull.classList.contains("active")) return;
 
-      const cmd = keyToCmd(e); if(!cmd) return;
-      if(!viewFull?.classList.contains("active")) return;
-      const id = (e.key||"").toLowerCase();
+      const id=(e.key||"").toLowerCase();
       e.preventDefault(); pressed.delete(id);
 
-      if(e.key==="ArrowUp")   keyEls.ArrowUp  ?.classList.remove("on");
-      if(e.key==="ArrowLeft") keyEls.ArrowLeft?.classList.remove("on");
-      if(e.key==="ArrowDown") keyEls.ArrowDown?.classList.remove("on");
-      if(e.key==="ArrowRight")keyEls.ArrowRight?.classList.remove("on");
-      if(e.key===" "){ keyEls.Space?.classList.remove("on"); }
+      if(e.key==="ArrowUp") keyEls.ArrowUp.classList.remove("on");
+      if(e.key==="ArrowLeft") keyEls.ArrowLeft.classList.remove("on");
+      if(e.key==="ArrowDown") keyEls.ArrowDown.classList.remove("on");
+      if(e.key==="ArrowRight") keyEls.ArrowRight.classList.remove("on");
+      if(e.key===" ") keyEls.Space.classList.remove("on");
 
       sendDirFromKey(e,false);
     },{passive:false});
 
-    window.addEventListener("blur", ()=> sendCommand("S"));
+    window.addEventListener("blur", ()=>sendCommand("S"));
     document.addEventListener("visibilitychange", ()=>{ if(document.hidden) sendCommand("S"); });
 
     // Boutons à l'écran
     $$(".controls .btn").forEach(b=>{
       const dir=b.getAttribute("data-dir");
+      const cmd = dir==="forward"?"F":dir==="backward"?"B":dir==="left"?"L":dir==="right"?"R":"S";
+
       b.addEventListener("mousedown", ()=>{
         b.classList.add("down");
-        if(dir==="forward") setThrottle(1);
-        if(dir==="backward") setBrake(1);
-        sendCommand(dir==="forward"?"F":dir==="backward"?"B":dir==="left"?"L":dir==="right"?"R":"S");
+        if(cmd==="F") setThrottle(1);
+        if(cmd==="B") setBrake(1);
+        sendCommand(cmd);
       });
       b.addEventListener("mouseup", ()=>{
         b.classList.remove("down");
         sendCommand("S");
       });
-      b.addEventListener("mouseleave", ()=> b.classList.remove("down"));
-      b.addEventListener("touchstart", (e)=>{ e.preventDefault(); b.classList.add("down");
-        if(dir==="forward") setThrottle(1);
-        if(dir==="backward") setBrake(1);
-        sendCommand(dir==="forward"?"F":dir==="backward"?"B":dir==="left"?"L":dir==="right"?"R":"S");
+      b.addEventListener("mouseleave", ()=>b.classList.remove("down"));
+
+      b.addEventListener("touchstart", (e)=>{
+        e.preventDefault();
+        b.classList.add("down");
+        if(cmd==="F") setThrottle(1);
+        if(cmd==="B") setBrake(1);
+        sendCommand(cmd);
       },{passive:false});
-      b.addEventListener("touchend", (e)=>{ e.preventDefault(); b.classList.remove("down"); sendCommand("S"); },{passive:false});
+      b.addEventListener("touchend", (e)=>{
+        e.preventDefault();
+        b.classList.remove("down");
+        sendCommand("S");
+      },{passive:false});
     });
-
-    // ===== Gamepad (basique)
-    let gpRAF=null;
-    window.addEventListener("gamepadconnected", (e)=>{
-      notify("Manette connectée.", "ok");
-      const loop=()=>{
-        const gp=navigator.getGamepads?.()[e.gamepad.index];
-        if(gp){
-          const axY = gp.axes[1]||0; const axX = gp.axes[0]||0;
-          const btnA = gp.buttons[0]?.pressed; // STOP
-          if(btnA){ setBrake(1); sendCommand("S"); }
-          else{
-            if(axY<-0.25){ setThrottle(Math.min(1,(-axY))); sendCommand("F"); }
-            else if(axY>0.25){ setBrake(Math.min(1,axY)); sendCommand("B"); }
-            else if(axX<-0.3){ sendCommand("L"); }
-            else if(axX>0.3){ sendCommand("R"); }
-            else { sendCommand("S"); }
-          }
-        }
-        gpRAF=requestAnimationFrame(loop);
-      };
-      if(!gpRAF) gpRAF=requestAnimationFrame(loop);
-    });
-    window.addEventListener("gamepaddisconnected", ()=>{
-      if(gpRAF){ cancelAnimationFrame(gpRAF); gpRAF=null; }
-      notify("Manette déconnectée.", "warn");
-    });
-
-    // ===== Mode DEMO (simulateur simple)
-    if(DEMO){
-      notify("Mode démo actif : données simulées.", "ok");
-      setInterval(()=>{
-        const t=performance.now()/1000;
-        updateSpeed( 12 + 10*Math.sin(t*1.2) + 2*Math.cos(t*0.4) );
-        updateBattery( 0 + 100*Math.sin(t*0.05) );
-        updatePing( 10 + 40*(1+Math.sin(t*0.8)) );
-        setThrottle( Math.max(0, Math.sin(t*0.8)*0.6) );
-        setBrake( Math.max(0, Math.cos(t*0.6)*0.4) );
-      }, 300);
-    }
 
     // Raccourci F pour plein écran vidéo (vue cam)
     document.addEventListener("keydown",(e)=>{
-      if((e.key||"").toLowerCase()==="f" && viewCam?.classList.contains("active")){
+      if((e.key||"").toLowerCase()==="f" && viewCam.classList.contains("active")){
         requestFullscreenOn(document.getElementById("streamCamWrap"));
       }
     });
 
-    // Debug rapide : double-clic HUD pour simuler
-    $("#hudFull")?.addEventListener("dblclick", ()=>{
-      updateSpeed(Math.random()*25);
-      updateBattery(Math.random()*100);
-      updatePing(Math.random()*200);
-      setThrottle(Math.random());
-      setBrake(Math.random());
-    });
+    // DEMO
+    if(DEMO){
+      notify("Mode démo actif : données simulées.", "ok");
+      setHttpState("ok","DEMO");
+      setInterval(()=>{
+        const t=performance.now()/1000;
+        updateSpeed( 12 + 10*Math.sin(t*1.2) + 2*Math.cos(t*0.4) );
+        updateBattery( 50 + 50*Math.sin(t*0.05) );
+        setThrottle( Math.max(0, Math.sin(t*0.8)*0.6) );
+        setBrake( Math.max(0, Math.cos(t*0.6)*0.4) );
+      }, 300);
+    }else{
+      setHttpState("warn","Renseigne la base HTTP");
+      startTelemetry();
+    }
 
     log("IHM prêt", {DEMO});
   })();
