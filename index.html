@@ -97,6 +97,32 @@
     }
     .stream.error .alert{ display:block; }
 
+    /* ====== FAKE FULLSCREEN (iPhone Safari friendly) ====== */
+    body.fs-lock{ overflow:hidden; touch-action:none; }
+    header.hidden{ display:none; }
+
+    .stream.fs{
+      position:fixed !important;
+      inset:0 !important;
+      width:100vw !important;
+      height:100vh !important; /* sera ajusté via JS sur iOS */
+      border-radius:0 !important;
+      border:none !important;
+      z-index:99999 !important;
+      background:#000 !important;
+      aspect-ratio:auto !important;
+    }
+    .stream.fs img{
+      width:100% !important;
+      height:100% !important;
+      object-fit:contain !important;
+    }
+    .stream.fs .hud{
+      padding-bottom:calc(10px + env(safe-area-inset-bottom));
+      padding-left:calc(14px + env(safe-area-inset-left));
+      padding-right:calc(14px + env(safe-area-inset-right));
+    }
+
     .meta{ display:flex; gap:12px; flex-wrap:wrap; color:var(--muted); font-size:.92rem; }
     .tag{ padding:4px 8px; border:1px solid rgba(255,255,255,.08); border-radius:999px; }
 
@@ -123,12 +149,6 @@
     /* Views */
     .view{ display:none; }
     .view.active{ display:block; }
-
-    /* Plein écran conteneur */
-    .stream:fullscreen{ width:100vw; height:100vh; border-radius:0; border:none; background:#000; }
-    .stream:fullscreen img{ width:100%; height:100%; object-fit:contain; background:#000; }
-    .stream:-webkit-full-screen{ width:100vw; height:100vh; border-radius:0; border:none; background:#000; }
-    .stream:-webkit-full-screen img{ width:100%; height:100%; object-fit:contain; background:#000; }
 
     .foot{
       text-align:center; padding:10px;
@@ -167,12 +187,16 @@
       border-top:1px solid rgba(255,255,255,.18);
       color:#fff; padding:10px 14px; font-weight:700; z-index:3;
 
+      /* 3 colonnes : gauche vide / vitesse centré / batterie droite */
       display:grid;
-      grid-template-columns: auto 1fr auto;
+      grid-template-columns: 1fr auto 1fr;
       align-items:center; gap:16px;
     }
+    .hud-left{ justify-self:start; }
+    .hud-center{ justify-self:center; }
+    .hud-right{ justify-self:end; }
 
-    /* Vitesse numérique GROS */
+    /* Vitesse */
     .speedBig{
       display:flex; align-items:baseline; gap:10px;
       font-size:3rem; line-height:1; letter-spacing:1px;
@@ -230,7 +254,14 @@
       #view-full .stream{ aspect-ratio:auto; height: calc(100vh - 280px); }
       #view-cam .stream{ height: calc(100vh - 200px); }
 
-      .hud{ grid-template-columns: 1fr; justify-items:center; gap:10px; }
+      /* Sur mobile, HUD en 2 lignes propre */
+      .hud{
+        grid-template-columns: 1fr;
+        justify-items:center;
+        gap:10px;
+      }
+      .hud-left{ display:none; }
+      .hud-right{ justify-self:center; }
       .speedBig .num{ font-size:2.6rem; }
     }
   </style>
@@ -273,19 +304,25 @@
           </div>
 
           <div class="stream" id="streamFullWrap">
-            <!-- === HUD FULL (sans barres) === -->
+            <!-- HUD FULL -->
             <div class="hud" id="hudFull" aria-live="polite">
-              <div class="speedBig" aria-label="Vitesse actuelle">
-                <span class="num" id="speedValBig">0</span>
-                <span class="unit">KM/H</span>
+              <div class="hud-left"></div>
+
+              <div class="hud-center">
+                <div class="speedBig" aria-label="Vitesse actuelle">
+                  <span class="num" id="speedValBig">0</span>
+                  <span class="unit">KM/H</span>
+                </div>
               </div>
 
-              <div class="batt" aria-label="Batterie">
-                <span class="label">Batt.</span>
-                <div class="batt-pack" id="battPack" aria-hidden="true">
-                  <span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span>
+              <div class="hud-right">
+                <div class="batt" aria-label="Batterie">
+                  <span class="label">Batt.</span>
+                  <div class="batt-pack" id="battPack" aria-hidden="true">
+                    <span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span>
+                  </div>
+                  <span class="val" id="battVal">--</span><span class="unit">%</span>
                 </div>
-                <span class="val" id="battVal">--</span><span class="unit">%</span>
               </div>
             </div>
 
@@ -336,7 +373,7 @@
             <div></div>
           </div>
         </div>
-        <div class="foot">Commandes HTTP : <code>/cmd?c=F|B|L|R|S</code>. Télémétrie (optionnel) : config JS en bas.</div>
+        <div class="foot">Commandes HTTP : <code>/cmd?c=F|B|L|R|S</code>. Télémétrie (optionnel) : config JS.</div>
       </div>
     </section>
 
@@ -348,26 +385,32 @@
           <div class="row">
             <div class="muted">Plein écran vidéo + anti-veille pour smartphone :</div>
             <div class="tools">
-              <button id="btnFS" class="link">Plein écran vidéo</button>
+              <button id="btnFS" class="link">Plein écran</button>
               <button id="btnWake" class="link">Anti-veille</button>
               <button id="btnReload" class="link">Recharger</button>
             </div>
           </div>
 
           <div class="stream" id="streamCamWrap" style="margin-top:10px">
-            <!-- === HUD CAM (sans barres) === -->
+            <!-- HUD CAM -->
             <div class="hud" id="hudCam" aria-live="polite">
-              <div style="display:flex;align-items:baseline;gap:6px;font-weight:800;">
-                <span id="speedValCam" style="font-size:2rem;line-height:1;font-variant-numeric:tabular-nums">0.0</span>
-                <span class="unit">km/h</span>
+              <div class="hud-left"></div>
+
+              <div class="hud-center">
+                <div style="display:flex;align-items:baseline;gap:6px;font-weight:800;">
+                  <span id="speedValCam" style="font-size:2rem;line-height:1;font-variant-numeric:tabular-nums">0.0</span>
+                  <span class="unit">km/h</span>
+                </div>
               </div>
 
-              <div class="batt">
-                <span class="label">Batt.</span>
-                <div class="batt-pack" id="battPackCam" aria-hidden="true">
-                  <span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span>
+              <div class="hud-right">
+                <div class="batt">
+                  <span class="label">Batt.</span>
+                  <div class="batt-pack" id="battPackCam" aria-hidden="true">
+                    <span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span>
+                  </div>
+                  <span class="val" id="battValCam">--</span><span class="unit">%</span>
                 </div>
-                <span class="val" id="battValCam">--</span><span class="unit">%</span>
               </div>
             </div>
 
@@ -385,7 +428,7 @@
             <button id="disconnectStreamCam" class="link danger">Déconnecter le flux</button>
           </div>
         </div>
-        <div class="foot">Astuce : tournez le téléphone en paysage pour une meilleure visibilité. Le plein écran est demandé uniquement pour l’élément vidéo.</div>
+        <div class="foot">Astuce : paysage = meilleur champ de vision. Plein écran “compatible iPhone Safari”.</div>
       </div>
     </section>
 
@@ -397,15 +440,15 @@
           <ol>
             <li><strong>Connectez-vous au réseau de l’ESP32</strong> (AP <code>192.168.4.1</code> ou votre réseau local).</li>
             <li><strong>Ouvrez ce fichier</strong> sur votre navigateur (PC ou smartphone).</li>
-            <li>Dans l’onglet <em>Contrôles + Caméra</em>, entrez :
+            <li>Dans <em>Contrôles + Caméra</em> :
               <ul>
                 <li><strong>Flux MJPEG</strong> : ex. <code>http://192.168.4.1:81/stream</code>.</li>
                 <li><strong>Base HTTP</strong> : ex. <code>http://192.168.4.1</code>.</li>
               </ul>
             </li>
             <li>Commandes : HTTP <code>/cmd?c=F|B|L|R|S</code>.</li>
-            <li><strong>Contrôles</strong> : flèches ou ZQSD ; <code>Espace</code>=STOP. Maintenir pour mouvement continu.</li>
-            <li>Pour une vue pilote sur smartphone : onglet <em>Caméra seule</em> → <em>Plein écran vidéo</em> + <em>Anti-veille</em>.</li>
+            <li><strong>Contrôles</strong> : flèches ou ZQSD ; <code>Espace</code>=STOP.</li>
+            <li>Sur iPhone : onglet <em>Caméra seule</em> → bouton <em>Plein écran</em>.</li>
           </ol>
         </div>
       </div>
@@ -427,9 +470,6 @@
       TEAM_TXT:"Groupe 2 Voiture RC"
     };
 
-    // ---- TÉLÉMÉTRIE HTTP (optionnel) ----
-    // 1) conseillé: GET {base}/telemetry -> JSON { speed: 12.3, battery: 87 }
-    // 2) fallback:  GET {base}/speed -> "12.3"  et GET {base}/battery -> "87"
     const TELEMETRY = {
       intervalMs: 700,
       endpointJson: "/telemetry",
@@ -457,6 +497,7 @@
     const DEMO = qp.get("demo")==="1";
 
     // Header
+    const headerEl=$("#appHeader");
     const logoEl=$("#logo"), teamEl=$("#team");
     if(logoEl){
       logoEl.src = param("logo", DEFAULTS.LOGO_URL);
@@ -478,7 +519,6 @@
       tabCam.classList.toggle("active", isCam);
       tabHelp.classList.toggle("active", isHelp);
       const url=new URL(location.href); url.searchParams.set("view", v); history.replaceState(null,"",url);
-      if(isCam){ attemptVideoFullscreen(); }
     }
     setView(param("view","full"));
     tabFull.addEventListener("click", ()=>setView("full"));
@@ -584,20 +624,8 @@
       window.open(url,"_blank");
     });
 
-    // ===== Plein écran + Wake Lock
-    const btnFS=$("#btnFS"), btnReload=$("#btnReload"), btnWake=$("#btnWake");
-    function requestFullscreenOn(el){
-      if(!el) return;
-      if(el.requestFullscreen) { el.requestFullscreen().catch(()=>{}); return; }
-      if(el.webkitRequestFullscreen) { try{ el.webkitRequestFullscreen(); }catch{} }
-    }
-    btnFS.addEventListener("click", ()=>{
-      requestFullscreenOn(document.getElementById("streamCamWrap"));
-      enableWakeLock();
-    });
-    btnReload.addEventListener("click", ()=>reloadImg(imgCam));
-    btnWake.addEventListener("click", ()=>enableWakeLock(true));
-
+    // ===== Wake Lock
+    const btnWake=$("#btnWake");
     let wakeLock=null;
     async function enableWakeLock(fromBtn=false){
       try{
@@ -610,17 +638,78 @@
         if(fromBtn) notify("Anti-veille non supporté par ce navigateur.", "warn");
       }
     }
-    async function attemptVideoFullscreen(){
-      const wrap=document.getElementById("streamCamWrap");
-      if(!wrap) return;
-      try{
-        if(document.fullscreenElement!==wrap){
-          if(wrap.requestFullscreen) await wrap.requestFullscreen();
-          else if(wrap.webkitRequestFullscreen) wrap.webkitRequestFullscreen();
-        }
-      }catch{}
+    btnWake.addEventListener("click", ()=>enableWakeLock(true));
+
+    // ===== Plein écran compatible iPhone Safari
+    const btnFS=$("#btnFS"), btnReload=$("#btnReload");
+    btnReload.addEventListener("click", ()=>reloadImg(imgCam));
+
+    function setFsHeight(el){
+      if(!el) return;
+      const h = (window.visualViewport?.height || window.innerHeight || 0);
+      if(h) el.style.height = h + "px";
+    }
+
+    function isFs(el){ return el?.classList.contains("fs"); }
+
+    function enterFakeFullscreen(el){
+      if(!el) return;
+      document.body.classList.add("fs-lock");
+      headerEl?.classList.add("hidden");
+      el.classList.add("fs");
+      setFsHeight(el);
+      window.scrollTo(0,0);
+      btnFS.textContent = "Quitter plein écran";
       enableWakeLock();
     }
+
+    function exitFakeFullscreen(el){
+      if(!el) return;
+      el.classList.remove("fs");
+      el.style.height = "";
+      headerEl?.classList.remove("hidden");
+      document.body.classList.remove("fs-lock");
+      btnFS.textContent = "Plein écran";
+    }
+
+    async function requestFullscreenOrFallback(el){
+      if(!el) return;
+      // Tentative “vrai fullscreen” (marchera sur certains navigateurs)
+      try{
+        if(el.requestFullscreen){
+          await el.requestFullscreen();
+          btnFS.textContent = "Quitter plein écran";
+          enableWakeLock();
+          return;
+        }
+      }catch{}
+      // Fallback Safari iOS: fake fullscreen
+      enterFakeFullscreen(el);
+    }
+
+    btnFS.addEventListener("click", async ()=>{
+      const el = streamCamWrap;
+      // si déjà fake fullscreen → sortir
+      if(isFs(el)){ exitFakeFullscreen(el); return; }
+      // si vrai fullscreen actif → sortir
+      if(document.fullscreenElement){
+        try{ await document.exitFullscreen(); }catch{}
+        btnFS.textContent = "Plein écran";
+        return;
+      }
+      await requestFullscreenOrFallback(el);
+    });
+
+    // si l'utilisateur change d'orientation / barre Safari bouge : on recalc la hauteur
+    window.addEventListener("resize", ()=>{ if(isFs(streamCamWrap)) setFsHeight(streamCamWrap); });
+    window.visualViewport?.addEventListener("resize", ()=>{ if(isFs(streamCamWrap)) setFsHeight(streamCamWrap); });
+
+    // si on sort d'un vrai fullscreen
+    document.addEventListener("fullscreenchange", ()=>{
+      if(!document.fullscreenElement){
+        btnFS.textContent="Plein écran";
+      }
+    });
 
     // ===== UI Telemetry (speed/batt)
     const speedValBig=$("#speedValBig");
@@ -714,24 +803,19 @@
       }
     }
 
-    function sendCommand(cmd){
-      sendOverHTTP(cmd);
-    }
+    function sendCommand(cmd){ sendOverHTTP(cmd); }
 
     $("#btnStop").addEventListener("click", ()=>sendCommand("S"));
-
     $("#btnTest").addEventListener("click", async ()=>{
       await sendOverHTTP("S", true);
-      await pollTelemetryOnce(true);
+      await pollTelemetryOnce();
       notify("Test HTTP terminé.", "ok");
     });
 
-    // ===== Télémetry polling (optionnel)
     async function pollTelemetryOnce(){
       const base=(httpBaseEl.value||"").trim().replace(/\/+$/,"");
       if(!/^https?:\/\//i.test(base)) return;
 
-      // 1) JSON
       try{
         const r = await fetch(base + TELEMETRY.endpointJson, { cache:"no-store" });
         if(r.ok){
@@ -742,7 +826,6 @@
         }
       }catch{}
 
-      // 2) fallback speed + battery (texte)
       try{
         const rs = await fetch(base + TELEMETRY.endpointSpeed, { cache:"no-store" });
         if(rs.ok){
@@ -761,15 +844,14 @@
 
     let telemTimer=null;
     function startTelemetry(){
-      stopTelemetry();
+      if(telemTimer) clearInterval(telemTimer);
       if(DEMO) return;
       telemTimer = setInterval(()=>pollTelemetryOnce(), TELEMETRY.intervalMs);
       pollTelemetryOnce();
     }
-    function stopTelemetry(){ if(telemTimer){ clearInterval(telemTimer); telemTimer=null; } }
-    httpBaseEl.addEventListener("change", ()=>{ startTelemetry(); });
+    httpBaseEl.addEventListener("change", startTelemetry);
 
-    // ===== Indicateur touches + contrôle clavier
+    // ===== touches + clavier
     const keyEls={ArrowUp:$("#kUp"), ArrowLeft:$("#kLeft"), ArrowDown:$("#kDown"), ArrowRight:$("#kRight"), Space:$("#kSpace")};
     const pressed=new Set();
 
@@ -786,7 +868,6 @@
       if(k===" " || k==="space" || k==="spacebar") return "S";
       return null;
     }
-
     function sendDirFromKey(evt, down){
       const cmd=keyToCmd(evt); if(!cmd) return;
       if(cmd==="S"){ sendCommand("S"); return; }
@@ -831,44 +912,21 @@
     window.addEventListener("blur", ()=>sendCommand("S"));
     document.addEventListener("visibilitychange", ()=>{ if(document.hidden) sendCommand("S"); });
 
-    // Boutons à l'écran
+    // Boutons
     $$(".controls .btn").forEach(b=>{
       const dir=b.getAttribute("data-dir");
       const cmd = dir==="forward"?"F":dir==="backward"?"B":dir==="left"?"L":dir==="right"?"R":"S";
-
-      b.addEventListener("mousedown", ()=>{
-        b.classList.add("down");
-        sendCommand(cmd);
-      });
-      b.addEventListener("mouseup", ()=>{
-        b.classList.remove("down");
-        sendCommand("S");
-      });
+      b.addEventListener("mousedown", ()=>{ b.classList.add("down"); sendCommand(cmd); });
+      b.addEventListener("mouseup", ()=>{ b.classList.remove("down"); sendCommand("S"); });
       b.addEventListener("mouseleave", ()=>b.classList.remove("down"));
-
-      b.addEventListener("touchstart", (e)=>{
-        e.preventDefault();
-        b.classList.add("down");
-        sendCommand(cmd);
-      },{passive:false});
-      b.addEventListener("touchend", (e)=>{
-        e.preventDefault();
-        b.classList.remove("down");
-        sendCommand("S");
-      },{passive:false});
-    });
-
-    // Raccourci F pour plein écran vidéo (vue cam)
-    document.addEventListener("keydown",(e)=>{
-      if((e.key||"").toLowerCase()==="f" && viewCam.classList.contains("active")){
-        requestFullscreenOn(document.getElementById("streamCamWrap"));
-      }
+      b.addEventListener("touchstart",(e)=>{ e.preventDefault(); b.classList.add("down"); sendCommand(cmd); },{passive:false});
+      b.addEventListener("touchend",(e)=>{ e.preventDefault(); b.classList.remove("down"); sendCommand("S"); },{passive:false});
     });
 
     // DEMO
     if(DEMO){
-      notify("Mode démo actif : données simulées.", "ok");
       setHttpState("ok","DEMO");
+      notify("Mode démo actif : données simulées.", "ok");
       setInterval(()=>{
         const t=performance.now()/1000;
         updateSpeed( 12 + 10*Math.sin(t*1.2) + 2*Math.cos(t*0.4) );
