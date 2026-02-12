@@ -105,7 +105,7 @@
       position:fixed !important;
       inset:0 !important;
       width:100vw !important;
-      height:100vh !important; /* sera ajusté via JS sur iOS */
+      height:100vh !important; /* ajusté via JS iOS */
       border-radius:0 !important;
       border:none !important;
       z-index:99999 !important;
@@ -187,14 +187,24 @@
       border-top:1px solid rgba(255,255,255,.18);
       color:#fff; padding:10px 14px; font-weight:700; z-index:3;
 
-      /* 3 colonnes : gauche vide / vitesse centré / batterie droite */
-      display:grid;
-      grid-template-columns: 1fr auto 1fr;
-      align-items:center; gap:16px;
+      /* ✅ batterie à droite + vitesse centrée "réelle" */
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
     }
-    .hud-left{ justify-self:start; }
-    .hud-center{ justify-self:center; }
-    .hud-right{ justify-self:end; }
+    .hud-left{ min-width:1px; }
+    .hud-right{ margin-left:auto; display:flex; align-items:center; }
+
+    /* ✅ centrage réel indépendant de la batterie */
+    .hud-center{
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%);
+      display:flex;
+      align-items:baseline;
+      justify-content:center;
+      pointer-events:none; /* évite de bloquer les interactions */
+    }
 
     /* Vitesse */
     .speedBig{
@@ -254,14 +264,7 @@
       #view-full .stream{ aspect-ratio:auto; height: calc(100vh - 280px); }
       #view-cam .stream{ height: calc(100vh - 200px); }
 
-      /* Sur mobile, HUD en 2 lignes propre */
-      .hud{
-        grid-template-columns: 1fr;
-        justify-items:center;
-        gap:10px;
-      }
-      .hud-left{ display:none; }
-      .hud-right{ justify-self:center; }
+      /* Sur mobile: on garde la vitesse centrée, et la batterie en bas à droite (plus compacte) */
       .speedBig .num{ font-size:2.6rem; }
     }
   </style>
@@ -674,7 +677,6 @@
 
     async function requestFullscreenOrFallback(el){
       if(!el) return;
-      // Tentative “vrai fullscreen” (marchera sur certains navigateurs)
       try{
         if(el.requestFullscreen){
           await el.requestFullscreen();
@@ -683,15 +685,12 @@
           return;
         }
       }catch{}
-      // Fallback Safari iOS: fake fullscreen
       enterFakeFullscreen(el);
     }
 
     btnFS.addEventListener("click", async ()=>{
       const el = streamCamWrap;
-      // si déjà fake fullscreen → sortir
       if(isFs(el)){ exitFakeFullscreen(el); return; }
-      // si vrai fullscreen actif → sortir
       if(document.fullscreenElement){
         try{ await document.exitFullscreen(); }catch{}
         btnFS.textContent = "Plein écran";
@@ -700,11 +699,9 @@
       await requestFullscreenOrFallback(el);
     });
 
-    // si l'utilisateur change d'orientation / barre Safari bouge : on recalc la hauteur
     window.addEventListener("resize", ()=>{ if(isFs(streamCamWrap)) setFsHeight(streamCamWrap); });
     window.visualViewport?.addEventListener("resize", ()=>{ if(isFs(streamCamWrap)) setFsHeight(streamCamWrap); });
 
-    // si on sort d'un vrai fullscreen
     document.addEventListener("fullscreenchange", ()=>{
       if(!document.fullscreenElement){
         btnFS.textContent="Plein écran";
@@ -797,7 +794,7 @@
         setHttpState("ok","HTTP OK");
         return true;
       }catch{
-        if(!silent) notify("Erreur réseau HTTP (commande non envoyée).", "err");
+        if(!silent) notify("Erreur réseau HTTP (commande non envoyé).", "err");
         setHttpState("err","HTTP KO");
         return false;
       }
