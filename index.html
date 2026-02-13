@@ -567,7 +567,7 @@
     let streamFullWrap=null, streamCamWrap=null;
     function setView(v){
       const isFull=v==="full", isCam=v==="cam", isHelp=v==="help";
-      if(!isCam && streamCamWrap) exitFakeFullscreen(streamCamWrap);
+      if(!isCam) exitFakeFullscreen(streamCamWrap);
       viewFull.classList.toggle("active", isFull);
       viewCam.classList.toggle("active", isCam);
       viewHelp.classList.toggle("active", isHelp);
