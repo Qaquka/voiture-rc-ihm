@@ -3,21 +3,11 @@
 #include <WiFi.h>
 #include <WebServer.h>
 
-#if __has_include("secrets.h")
-#include "secrets.h"
-#endif
-
-#ifndef WIFI_SSID
-#define WIFI_SSID "WIFI-0C06-GEII"
-#endif
-
-#ifndef WIFI_PASSWORD
-#define WIFI_PASSWORD "iutgeiiiutgeii"
-#endif
-
 // =====================
 //  PARAMÈTRES WIFI
 // =====================
+const char* ssid     = "WIFI-0C06-GEII";
+const char* password = "iutgeiiiutgeii";
 
 // =====================
 //  PINS ESP32-CAM AI THINKER
@@ -27,7 +17,6 @@
 #define XCLK_GPIO_NUM      0
 #define SIOD_GPIO_NUM     26
 #define SIOC_GPIO_NUM     27
-
 #define Y9_GPIO_NUM       35
 #define Y8_GPIO_NUM       34
 #define Y7_GPIO_NUM       39
@@ -40,10 +29,37 @@
 #define HREF_GPIO_NUM     23
 #define PCLK_GPIO_NUM     22
 
+WiFiClient streamClient;
+bool streamActive = false;
+
 // =====================
 //  SERVEUR HTTP
 // =====================
 WebServer server(80);
+bool flashState = false;
+
+// =====================
+//  PAGE HTML
+// =====================
+static const char PROGMEM INDEX_HTML[] = R"rawliteral(
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>ESP32-CAM</title>
+  <style>
+    body { background:#111; color:#fff; text-align:center; font-family:Arial; }
+    img { width:90vw; max-width:640px; margin-top:20px; }
+    button { padding:10px 20px; font-size:16px; margin-top:15px; }
+  </style>
+</head>
+<body>
+  <h2>ESP32-CAM</h2>
+  <img src="/stream">
+  <br>
+</body>
+</html>
+)rawliteral";
 
 // =====================
 //  INIT CAMERA
@@ -68,93 +84,108 @@ bool initCamera() {
   config.pin_sccb_scl = SIOC_GPIO_NUM;
   config.pin_pwdn     = PWDN_GPIO_NUM;
   config.pin_reset    = RESET_GPIO_NUM;
-  config.xclk_freq_hz = 20000000;
+
+  config.xclk_freq_hz = 16000000;         
   config.pixel_format = PIXFORMAT_JPEG;
 
-  config.frame_size   = FRAMESIZE_QVGA;   // 320x240
-  config.jpeg_quality = 40;               
-  config.fb_count     = 1;                
+  config.frame_size   = FRAMESIZE_CIF;     
+  config.jpeg_quality = 30;                 // compression
+  config.fb_count     = 2;                  // mémoire tampon
 
-  esp_err_t err = esp_camera_init(&config);
-  if (err != ESP_OK) {
-    Serial.printf("[CAM] Erreur init camera 0x%x\n", err);
+  if (esp_camera_init(&config) != ESP_OK) {
     return false;
   }
-
-  Serial.println("[CAM] Init OK");
   return true;
 }
 
 // =====================
-//  FLUX MJPEG
+//  HANDLERS
 // =====================
-void handleStream() {
-  WiFiClient client = server.client();
+void handleRoot() {
+  server.send_P(200, "text/html", INDEX_HTML);
+}
 
-  client.print(
+void handleStream() {
+
+  if (streamActive) {
+    server.send(503, "text/plain", "Stream already in use");
+    return;
+  }
+
+  streamClient = server.client();
+  streamActive = true;
+
+  Serial.println("[STREAM] Client connecté");
+
+  streamClient.print(
     "HTTP/1.1 200 OK\r\n"
     "Content-Type: multipart/x-mixed-replace; boundary=frame\r\n"
     "Cache-Control: no-cache\r\n"
-    "Pragma: no-cache\r\n\r\n"
+    "Pragma: no-cache\r\n"
+    "\r\n"
   );
 
-  Serial.println("[STREAM] Client connecte");
+  while (streamClient.connected()) {
 
-  while (client.connected()) {
-    camera_fb_t * fb = esp_camera_fb_get();
+    camera_fb_t *fb = esp_camera_fb_get();
     if (!fb) {
-      Serial.println("[STREAM] Erreur capture");
+      Serial.println("[STREAM] Capture échouée");
       break;
     }
 
-    client.printf("--frame\r\n");
-    client.printf("Content-Type: image/jpeg\r\n");
-    client.printf("Content-Length: %u\r\n\r\n", fb->len);
-    client.write(fb->buf, fb->len);
-    client.print("\r\n");
+    streamClient.print("--frame\r\n");
+    streamClient.print("Content-Type: image/jpeg\r\n");
+    streamClient.printf("Content-Length: %u\r\n\r\n", fb->len);
+    streamClient.write(fb->buf, fb->len);
+    streamClient.print("\r\n");
 
     esp_camera_fb_return(fb);
-    delay(40);
+
+    yield();
+    delay(1);
   }
 
-  Serial.println("[STREAM] Client deconnecte");
+  streamClient.stop();
+  streamActive = false;
+
+  Serial.println("[STREAM] Client déconnecté");
 }
+
 
 // =====================
 //  SETUP / LOOP
 // =====================
 void setup() {
   Serial.begin(115200);
-  Serial.println("\nBoot ESP32-CAM...");
 
   if (!initCamera()) {
-    Serial.println("Camera KO, reboot...");
-    delay(3000);
     ESP.restart();
   }
 
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-
-  Serial.print("Connexion WiFi ");
-  Serial.print(WIFI_SSID);
-
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+  sensor_t *s = esp_camera_sensor_get();
+  if (s) {
+    s->set_framesize(s, FRAMESIZE_CIF);
+    s->set_quality(s, 12);
+    s->set_gain_ctrl(s, 1);
+    s->set_exposure_ctrl(s, 1);
+    s->set_awb_gain(s, 1);
+    s->set_denoise(s, 1);
+    s->set_contrast(s, -1);
+    s->set_brightness(s, 0);
+    s->set_aec2(s, 1);
+    s->set_ae_level(s, 0);
+    s->set_saturation(s, 2);
   }
 
-  Serial.println("\nWiFi connecte !");
-  Serial.print("IP : ");
-  Serial.println(WiFi.localIP());
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+  }
 
-  server.on("/stream", HTTP_GET, handleStream);
+  server.on("/", handleRoot);
+  server.on("/stream", handleStream);
   server.begin();
-
-  Serial.println("Serveur HTTP actif.");
-  Serial.print("➡ Ouvre : http://");
-  Serial.print(WiFi.localIP());
-  Serial.println("/stream");
 }
 
 void loop() {
