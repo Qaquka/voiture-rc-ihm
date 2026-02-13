@@ -658,12 +658,20 @@
     const retryFull=$("#retryFull"), retryCam=$("#retryCam");
     const btnDisconnectStream=$("#disconnectStream");
     const btnDisconnectStreamCam=$("#disconnectStreamCam");
-    const fpsBadge=$("#fpsBadge"); let _lastFrameAt=null, _fpsAvg=0;
+    const fpsBadge=$("#fpsBadge");
+    const FPS_WINDOW_MS = 4000;
+    const FPS_STALE_MS = 1600;
+    let _fpsFrameTimes=[];
+    let _fpsLastEventAt=0;
+    let _fpsUiTimer=null;
 
     const streamDefault = param("stream", DEFAULTS.STREAM_URL);
+    resetFps();
+    startFpsLoop();
     setStream(streamDefault);
 
     function setStream(url){
+      resetFps();
       imgFull.src=url; imgCam.src=url;
       streamUrl.value=url; streamUrlCam.value=url;
       clearStreamError(true); clearStreamError(false);
@@ -686,25 +694,59 @@
       const wrap = full ? streamFullWrap : streamCamWrap;
       wrap.classList.remove("error");
     }
-    function updateFPS(){
-      const now=performance.now();
-      if(_lastFrameAt!=null){
-        const dt=(now-_lastFrameAt)/1000;
-        const fps=1/dt;
-        _fpsAvg=_fpsAvg*0.8+fps*0.2;
-        fpsBadge.textContent="FPS "+Math.max(0,Math.round(_fpsAvg)).toString().padStart(2,"0");
-        fpsBadge.className="badge "+(_fpsAvg>20?"ok":_fpsAvg>10?"warn":"err");
+    function trimFpsSamples(now){
+      while(_fpsFrameTimes.length && (now - _fpsFrameTimes[0]) > FPS_WINDOW_MS){
+        _fpsFrameTimes.shift();
       }
-      _lastFrameAt=now;
     }
 
-    imgFull.addEventListener("load", ()=>{ clearStreamError(true); updateFPS(); });
-    imgCam .addEventListener("load", ()=>  clearStreamError(false));
+    function setFpsBadgeValue(label, level="warn"){
+      fpsBadge.textContent = label;
+      fpsBadge.className = "badge " + level;
+    }
+
+    function resetFps(){
+      _fpsFrameTimes=[];
+      _fpsLastEventAt=0;
+      setFpsBadgeValue("FPS --", "warn");
+    }
+
+    function registerFrameTick(){
+      const now = performance.now();
+      _fpsLastEventAt = now;
+      _fpsFrameTimes.push(now);
+      trimFpsSamples(now);
+    }
+
+    function refreshFpsBadge(){
+      const now = performance.now();
+      trimFpsSamples(now);
+
+      if(_fpsFrameTimes.length < 2 || (now - _fpsLastEventAt) > FPS_STALE_MS){
+        setFpsBadgeValue("FPS --", _fpsLastEventAt ? "err" : "warn");
+        return;
+      }
+
+      const elapsedMs = _fpsFrameTimes[_fpsFrameTimes.length - 1] - _fpsFrameTimes[0];
+      const fps = elapsedMs > 0 ? ((_fpsFrameTimes.length - 1) * 1000 / elapsedMs) : 0;
+      const rounded = Math.max(0, Math.round(fps));
+      setFpsBadgeValue("FPS " + String(rounded).padStart(2,"0"), fps > 20 ? "ok" : fps > 10 ? "warn" : "err");
+    }
+
+    function startFpsLoop(){
+      if(_fpsUiTimer) clearInterval(_fpsUiTimer);
+      _fpsUiTimer = setInterval(refreshFpsBadge, 250);
+    }
+
+    imgFull.addEventListener("load", ()=>{ clearStreamError(true); registerFrameTick(); });
+    imgCam .addEventListener("load", ()=>{ clearStreamError(false); registerFrameTick(); });
     imgFull.addEventListener("error", ()=>{
+      resetFps();
       showStreamError(true, "Flux vidéo indisponible (URL invalide, caméra arrêtée ou réseau HS).");
       notify("Erreur flux vidéo (vue complète).", "err", [{id:"r",label:"Réessayer",onClick:()=>reloadImg(imgFull)}]);
     });
     imgCam.addEventListener("error", ()=>{
+      resetFps();
       showStreamError(false, "Flux vidéo indisponible (URL invalide, caméra arrêtée ou réseau HS).");
       notify("Erreur flux vidéo (vue caméra).", "err", [{id:"r",label:"Réessayer",onClick:()=>reloadImg(imgCam)}]);
     });
@@ -727,6 +769,7 @@
       const wrap  = full ? streamFullWrap : streamCamWrap;
       const alert = full ? $("#alertFull") : $("#alertCam");
       wrap.classList.add("error");
+      resetFps();
       setAlertMessage(alert, "Flux déconnecté par l’utilisateur.");
       notify("Flux vidéo déconnecté.", "warn");
     }
