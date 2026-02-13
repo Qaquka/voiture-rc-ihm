@@ -50,6 +50,11 @@ static constexpr uint32_t WIFI_CONNECT_TIMEOUT_MS = 30000;
 WebServer server(80);
 bool streamActive = false;
 
+volatile float lastStreamFps = 0.0f;
+volatile uint32_t totalFrames = 0;
+uint32_t fpsWindowStartMs = 0;
+uint32_t fpsWindowFrames = 0;
+
 void applySensorTuning() {
   sensor_t* s = esp_camera_sensor_get();
   if (!s) return;
@@ -127,6 +132,17 @@ bool initCamera() {
   return true;
 }
 
+void handleStats() {
+  String json = "{";
+  json += "\"fps\":" + String(lastStreamFps, 1);
+  json += ",\"streamActive\":" + String(streamActive ? "true" : "false");
+  json += ",\"totalFrames\":" + String(totalFrames);
+  json += "}";
+
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  server.send(200, "application/json", json);
+}
+
 void handleStream() {
   if (streamActive) {
     server.send(503, "text/plain", "Stream already in use");
@@ -136,6 +152,8 @@ void handleStream() {
   WiFiClient client = server.client();
   client.setNoDelay(true);
   streamActive = true;
+  fpsWindowStartMs = millis();
+  fpsWindowFrames = 0;
 
   client.print(
     "HTTP/1.1 200 OK\r\n"
@@ -166,12 +184,23 @@ void handleStream() {
       break;
     }
 
+    totalFrames++;
+    fpsWindowFrames++;
+    const uint32_t nowMs = millis();
+    const uint32_t winMs = nowMs - fpsWindowStartMs;
+    if (winMs >= 1000) {
+      lastStreamFps = (fpsWindowFrames * 1000.0f) / static_cast<float>(winMs);
+      fpsWindowFrames = 0;
+      fpsWindowStartMs = nowMs;
+    }
+
     yield();
     delay(1);
   }
 
   client.stop();
   streamActive = false;
+  lastStreamFps = 0.0f;
   Serial.println("[STREAM] Client deconnecte");
 }
 
@@ -207,6 +236,7 @@ void setup() {
   Serial.println(WiFi.localIP());
 
   server.on("/stream", HTTP_GET, handleStream);
+  server.on("/stats", HTTP_GET, handleStats);
   server.begin();
 
   Serial.println("Serveur HTTP actif.");
