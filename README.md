@@ -74,3 +74,7 @@ python3 -m http.server 4173 --bind 0.0.0.0
 
 Puis ouvrir: `http://127.0.0.1:4173/index.html`
 
+
+## Notes
+
+- Configuration Wi-Fi firmware: voir `WIFI_SECRETS.md`.

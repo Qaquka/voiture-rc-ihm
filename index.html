@@ -567,10 +567,15 @@
     };
 
     const TELEMETRY = {
-      intervalMs: 700,
+      slowMs: 1200,
+      fastMs: 450,
       endpointJson: "/telemetry",
       endpointSpeed: "/speed",
       endpointBattery: "/battery"
+    };
+
+    const COMMAND = {
+      minGapMs: 80
     };
 
     function notify(msg, level="err", actions=[]){
@@ -925,7 +930,41 @@
       }
     }
 
-    function sendCommand(cmd){ sendOverHTTP(cmd); }
+    let lastCmdSent="";
+    let lastCmdAt=0;
+    let cmdInFlight=false;
+    let queuedCmd=null;
+
+    function shouldSkipCommand(cmd){
+      const now = Date.now();
+      return cmd===lastCmdSent && (now-lastCmdAt)<COMMAND.minGapMs;
+    }
+
+    async function flushQueuedCommand(){
+      if(!queuedCmd) return;
+      const next=queuedCmd;
+      queuedCmd=null;
+      await sendCommand(next);
+    }
+
+    async function sendCommand(cmd){
+      setTelemetryMode(cmd!=="S");
+      if(shouldSkipCommand(cmd)) return;
+
+      if(cmdInFlight){
+        queuedCmd=cmd;
+        return;
+      }
+
+      cmdInFlight=true;
+      lastCmdSent=cmd;
+      lastCmdAt=Date.now();
+      try{ await sendOverHTTP(cmd); }
+      finally{
+        cmdInFlight=false;
+        await flushQueuedCommand();
+      }
+    }
 
     $("#btnStop").addEventListener("click", ()=>sendCommand("S"));
     $("#btnTest").addEventListener("click", async ()=>{
@@ -965,10 +1004,25 @@
     }
 
     let telemTimer=null;
-    function startTelemetry(){
+    let telemIntervalMs=TELEMETRY.slowMs;
+
+    function restartTelemetryTimer(){
       if(telemTimer) clearInterval(telemTimer);
       if(DEMO) return;
-      telemTimer = setInterval(()=>pollTelemetryOnce(), TELEMETRY.intervalMs);
+      telemTimer = setInterval(()=>pollTelemetryOnce(), telemIntervalMs);
+    }
+
+    function setTelemetryMode(isMoving){
+      const targetMs = isMoving ? TELEMETRY.fastMs : TELEMETRY.slowMs;
+      if(targetMs===telemIntervalMs) return;
+      telemIntervalMs=targetMs;
+      restartTelemetryTimer();
+    }
+
+    function startTelemetry(){
+      setTelemetryMode(false);
+      if(DEMO) return;
+      restartTelemetryTimer();
       pollTelemetryOnce();
     }
     httpBaseEl.addEventListener("change", startTelemetry);

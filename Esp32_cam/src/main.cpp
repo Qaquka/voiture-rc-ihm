@@ -3,11 +3,21 @@
 #include <WiFi.h>
 #include <WebServer.h>
 
+#if __has_include("secrets.h")
+#include "secrets.h"
+#endif
+
+#ifndef WIFI_SSID
+#define WIFI_SSID "WIFI-0C06-GEII"
+#endif
+
+#ifndef WIFI_PASSWORD
+#define WIFI_PASSWORD "iutgeiiiutgeii"
+#endif
+
 // =====================
 //  PARAMÈTRES WIFI
 // =====================
-const char* ssid     = "WIFI-0C06-GEII";
-const char* password = "iutgeiiiutgeii";
 
 // =====================
 //  PINS ESP32-CAM AI THINKER
@@ -124,10 +134,10 @@ void setup() {
   }
 
   WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   Serial.print("Connexion WiFi ");
-  Serial.print(ssid);
+  Serial.print(WIFI_SSID);
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);

@@ -1,15 +1,29 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WebServer.h>
+#include <ctype.h>
+
+#if __has_include("secrets.h")
+#include "secrets.h"
+#endif
+
+#ifndef WIFI_SSID
+#define WIFI_SSID "WIFI-0C06-GEII"
+#endif
+
+#ifndef WIFI_PASSWORD
+#define WIFI_PASSWORD "iutgeiiiutgeii"
+#endif
 
 #define LED_PIN 2   // LED intégrée (ESP32 DevKit)
 
 // ========= PARAMÈTRES Wi-Fi =========
-const char* WIFI_SSID     = "WIFI-0C06-GEII";
-const char* WIFI_PASSWORD = "iutgeiiiutgeii";
-
 // ========= SERVEUR HTTP =========
 WebServer server(80);
+
+bool isValidCommand(char cmd) {
+  return cmd=='F' || cmd=='B' || cmd=='L' || cmd=='R' || cmd=='S';
+}
 
 // Traite la commande reçue (F/B/L/R/S)
 void handleCommand(char cmd) {
@@ -36,14 +50,23 @@ void handleCmd() {
   Serial.print("Commande recue: ");
   Serial.println(c);
 
-  if (c.length() > 0) {
-    handleCommand(c[0]);
-  }
-
   // --- CORS pour l’IHM ---
   server.sendHeader("Access-Control-Allow-Origin", "*");
   server.sendHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   server.sendHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (c.length() != 1) {
+    server.send(400, "text/plain", "ERR: missing/invalid cmd");
+    return;
+  }
+
+  char cmd = toupper(c[0]);
+  if (!isValidCommand(cmd)) {
+    server.send(400, "text/plain", "ERR: unknown cmd");
+    return;
+  }
+
+  handleCommand(cmd);
   server.send(200, "text/plain", "OK");
 }
 
