@@ -272,6 +272,23 @@
     .key{ border:1px solid rgba(255,255,255,.2); padding:2px 6px; border-radius:6px; min-width:20px; text-align:center;}
     .key.on{ background:rgba(56,189,248,.15); border-color:rgba(56,189,248,.6); color:#fff;}
 
+
+
+    /* Aide */
+    .help-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .help-block{
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:12px;
+      padding:12px;
+    }
+    .help-block h3{ margin:0 0 8px; font-size:.98rem; }
+    .help-block ul{ margin:0; padding-left:18px; color:var(--muted); }
+    .help-block li{ margin:6px 0; }
+    .help-steps{ margin:0; padding-left:18px; }
+    .help-steps li{ margin:10px 0; }
+    .help-kbd{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.85rem; padding:2px 6px; border:1px solid rgba(255,255,255,.25); border-radius:6px; background:rgba(255,255,255,.06); }
+
     /* ===== Responsive auto ===== */
     @media (max-width: 900px){
       main{ max-width:100%; padding:0 10px; margin:10px auto 14px; }
@@ -297,6 +314,11 @@
       .speedBig{ font-size:2.6rem; }
       .speedBig .num{ font-size:2.8rem; }
       .cell{ width:11px; height:17px; }
+    }
+
+    /* Isolé pour limiter les conflits de merge avec les réglages HUD mobile */
+    @media (max-width: 640px){
+      .help-grid{ grid-template-columns:1fr; }
     }
   </style>
 </head>
@@ -469,21 +491,61 @@
     <!-- ========================= VUE HELP ========================= -->
     <section id="view-help" class="view help">
       <div class="card">
-        <h2>Aide – Mise en route & utilisation</h2>
+        <h2>Aide – Mise en route rapide</h2>
         <div class="content">
-          <ol>
-            <li><strong>Connectez-vous au réseau de l’ESP32</strong> (AP <code>192.168.4.1</code> ou votre réseau local).</li>
-            <li><strong>Ouvrez ce fichier</strong> sur votre navigateur (PC ou smartphone).</li>
-            <li>Dans <em>Contrôles + Caméra</em> :
+          <ol class="help-steps">
+            <li><strong>Connexion réseau :</strong> connectez votre téléphone/PC au réseau de l’ESP32 (<code>192.168.4.1</code> en AP ou votre LAN).</li>
+            <li><strong>Configurer les URLs :</strong> dans l’onglet <em>Contrôles + Caméra</em>, renseignez :
               <ul>
-                <li><strong>Flux MJPEG</strong> : ex. <code>http://192.168.4.1:81/stream</code>.</li>
-                <li><strong>Base HTTP</strong> : ex. <code>http://192.168.4.1</code>.</li>
+                <li><strong>Flux MJPEG</strong> → ex. <code>http://192.168.4.1:81/stream</code></li>
+                <li><strong>Base HTTP</strong> → ex. <code>http://192.168.4.1</code></li>
               </ul>
             </li>
-            <li>Commandes : HTTP <code>/cmd?c=F|B|L|R|S</code>.</li>
-            <li><strong>Contrôles</strong> : flèches ou ZQSD ; <code>Espace</code>=STOP.</li>
-            <li>Sur iPhone : onglet <em>Caméra seule</em> → bouton <em>Plein écran</em>.</li>
+            <li><strong>Tester la liaison :</strong> cliquez sur <em>Test HTTP</em>, puis vérifiez le statut (<em>HTTP OK</em>).</li>
           </ol>
+
+          <div class="help-grid" style="margin-top:12px">
+            <article class="help-block">
+              <h3>Commandes voiture</h3>
+              <ul>
+                <li>Endpoint: <code>/cmd?c=F|B|L|R|S</code></li>
+                <li><span class="help-kbd">↑ / Z</span> Avancer</li>
+                <li><span class="help-kbd">↓ / S</span> Reculer</li>
+                <li><span class="help-kbd">← / Q</span> Gauche</li>
+                <li><span class="help-kbd">→ / D</span> Droite</li>
+                <li><span class="help-kbd">Espace</span> STOP</li>
+              </ul>
+            </article>
+
+            <article class="help-block">
+              <h3>Caméra & iPhone</h3>
+              <ul>
+                <li>Utilisez l’onglet <em>Caméra seule</em> pour un affichage plein écran.</li>
+                <li>Appuyez sur <em>Plein écran</em> puis <em>Anti-veille</em> si disponible.</li>
+                <li>En cas d’écran noir : <em>Recharger</em> puis vérifier l’URL MJPEG.</li>
+                <li>En paysage, le champ de vision est plus confortable.</li>
+              </ul>
+            </article>
+
+            <article class="help-block">
+              <h3>Dépannage rapide</h3>
+              <ul>
+                <li><strong>HTTP KO :</strong> vérifier la base HTTP et le Wi-Fi.</li>
+                <li><strong>Flux indisponible :</strong> vérifier le port <code>:81/stream</code>.</li>
+                <li><strong>Latence :</strong> réduire la distance Wi-Fi et fermer les applis en arrière-plan.</li>
+                <li><strong>Sécurité :</strong> tester d’abord roues levées, garder le STOP accessible.</li>
+              </ul>
+            </article>
+
+            <article class="help-block">
+              <h3>Télémétrie (optionnelle)</h3>
+              <ul>
+                <li>JSON: <code>/telemetry</code> (speed + battery)</li>
+                <li>Fallback: <code>/speed</code> et <code>/battery</code></li>
+                <li>Le polling est HTTP uniquement (pas de WebSocket/MQTT).</li>
+              </ul>
+            </article>
+          </div>
         </div>
       </div>
     </section>
