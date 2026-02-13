@@ -198,11 +198,12 @@
     /* ========= HUD (overlay) ========= */
     .hud{
       position:absolute; bottom:0; left:0; right:0;
-      background:rgba(0,0,0,.52);              /* un poil plus opaque */
-      border-top:1px solid rgba(255,255,255,.18);
+      background:linear-gradient(180deg, rgba(15,23,42,.18), rgba(2,6,23,.78));
+      border-top:1px solid rgba(255,255,255,.14);
+      backdrop-filter: blur(4px);
       color:#fff;
-      padding:14px 18px;                       /* ✅ plus “épais” */
-      font-weight:800;
+      padding:12px 16px;
+      font-weight:700;
       z-index:3;
 
       /* ✅ batterie à droite + vitesse centrée "réelle" */
@@ -292,7 +293,7 @@
       #view-full .stream{ aspect-ratio:auto; height: calc((var(--vh, 1vh) * 100) - 280px); min-height:260px; }
       #view-cam .stream{ height: calc((var(--vh, 1vh) * 100) - 200px); min-height:280px; }
 
-      .hud{ padding:12px 14px; }
+      .hud{ padding:10px 12px; }
       .speedBig{ font-size:2.6rem; }
       .speedBig .num{ font-size:2.8rem; }
       .cell{ width:11px; height:17px; }
@@ -563,6 +564,7 @@
     // Tabs
     const tabFull=$("#tabFull"), tabCam=$("#tabCam"), tabHelp=$("#tabHelp");
     const viewFull=$("#view-full"), viewCam=$("#view-cam"), viewHelp=$("#view-help");
+    let streamFullWrap=null, streamCamWrap=null;
     function setView(v){
       const isFull=v==="full", isCam=v==="cam", isHelp=v==="help";
       if(!isCam) exitFakeFullscreen(streamCamWrap);
@@ -584,7 +586,8 @@
     const streamUrl=$("#streamUrl"), streamUrlCam=$("#streamUrlCam");
     const applyStream=$("#applyStream"), reloadStream=$("#reloadStream");
     const applyStreamCam=$("#applyStreamCam"), reloadStreamCam=$("#reloadStreamCam");
-    const streamFullWrap=$("#streamFullWrap"), streamCamWrap=$("#streamCamWrap");
+    streamFullWrap=$("#streamFullWrap");
+    streamCamWrap=$("#streamCamWrap");
     const retryFull=$("#retryFull"), retryCam=$("#retryCam");
     const btnDisconnectStream=$("#disconnectStream");
     const btnDisconnectStreamCam=$("#disconnectStreamCam");
