@@ -10,6 +10,7 @@
       --brand:#22c55e; --accent:#38bdf8; --danger:#ef4444; --warn:#f59e0b;
       --shadow:0 8px 22px rgba(0,0,0,.28);
       --radius:16px;
+      --vh:1vh;
     }
     *{ box-sizing:border-box; }
 
@@ -111,14 +112,14 @@
     .stream.error .alert{ display:block; }
 
     /* ====== FAKE FULLSCREEN (iPhone Safari friendly) ====== */
-    body.fs-lock{ overflow:hidden; touch-action:none; }
+    body.fs-lock{ overflow:hidden; touch-action:none; position:fixed; width:100%; }
     header.hidden{ display:none; }
 
     .stream.fs{
       position:fixed !important;
       inset:0 !important;
       width:100vw !important;
-      height:100vh !important; /* ajusté via JS iOS */
+      height:calc(var(--vh, 1vh) * 100) !important; /* ajusté via JS iOS */
       border-radius:0 !important;
       border:none !important;
       z-index:99999 !important;
@@ -131,6 +132,7 @@
       object-fit:contain !important;
     }
     .stream.fs .hud{
+      padding-top:calc(10px + env(safe-area-inset-top));
       padding-bottom:calc(14px + env(safe-area-inset-bottom));
       padding-left:calc(18px + env(safe-area-inset-left));
       padding-right:calc(18px + env(safe-area-inset-right));
@@ -196,11 +198,12 @@
     /* ========= HUD (overlay) ========= */
     .hud{
       position:absolute; bottom:0; left:0; right:0;
-      background:rgba(0,0,0,.52);              /* un poil plus opaque */
-      border-top:1px solid rgba(255,255,255,.18);
+      background:linear-gradient(180deg, rgba(15,23,42,.18), rgba(2,6,23,.78));
+      border-top:1px solid rgba(255,255,255,.14);
+      backdrop-filter: blur(4px);
       color:#fff;
-      padding:14px 18px;                       /* ✅ plus “épais” */
-      font-weight:800;
+      padding:12px 16px;
+      font-weight:700;
       z-index:3;
 
       /* ✅ batterie à droite + vitesse centrée "réelle" */
@@ -265,9 +268,26 @@
     .http-err{ background:rgba(239,68,68,.18); border-color:rgba(239,68,68,.55); }
 
     /* Barre touches actives */
-    .keys{ display:flex; gap:6px; align-items:center; font-size:.9rem; color:var(--muted); }
+    .keys{ display:flex; gap:6px; align-items:center; font-size:.9rem; color:var(--muted); margin-left:auto; }
     .key{ border:1px solid rgba(255,255,255,.2); padding:2px 6px; border-radius:6px; min-width:20px; text-align:center;}
     .key.on{ background:rgba(56,189,248,.15); border-color:rgba(56,189,248,.6); color:#fff;}
+
+
+
+    /* Aide */
+    .help-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .help-block{
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:12px;
+      padding:12px;
+    }
+    .help-block h3{ margin:0 0 8px; font-size:.98rem; }
+    .help-block ul{ margin:0; padding-left:18px; color:var(--muted); }
+    .help-block li{ margin:6px 0; }
+    .help-steps{ margin:0; padding-left:18px; }
+    .help-steps li{ margin:10px 0; }
+    .help-kbd{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.85rem; padding:2px 6px; border:1px solid rgba(255,255,255,.25); border-radius:6px; background:rgba(255,255,255,.06); }
 
     /* ===== Responsive auto ===== */
     @media (max-width: 900px){
@@ -287,13 +307,18 @@
       #view-full #openCamOnly{ display:none; }
       #view-cam .row input[type="text"]{ display:none; }
 
-      #view-full .stream{ aspect-ratio:auto; height: calc(100vh - 280px); }
-      #view-cam .stream{ height: calc(100vh - 200px); }
+      #view-full .stream{ aspect-ratio:auto; height: calc((var(--vh, 1vh) * 100) - 280px); min-height:260px; }
+      #view-cam .stream{ height: calc((var(--vh, 1vh) * 100) - 200px); min-height:280px; }
 
-      .hud{ padding:12px 14px; }
+      .hud{ padding:10px 12px; }
       .speedBig{ font-size:2.6rem; }
       .speedBig .num{ font-size:2.8rem; }
       .cell{ width:11px; height:17px; }
+    }
+
+    /* Isolé pour limiter les conflits de merge avec les réglages HUD mobile */
+    @media (max-width: 640px){
+      .help-grid{ grid-template-columns:1fr; }
     }
   </style>
 </head>
@@ -466,21 +491,61 @@
     <!-- ========================= VUE HELP ========================= -->
     <section id="view-help" class="view help">
       <div class="card">
-        <h2>Aide – Mise en route & utilisation</h2>
+        <h2>Aide – Mise en route rapide</h2>
         <div class="content">
-          <ol>
-            <li><strong>Connectez-vous au réseau de l’ESP32</strong> (AP <code>192.168.4.1</code> ou votre réseau local).</li>
-            <li><strong>Ouvrez ce fichier</strong> sur votre navigateur (PC ou smartphone).</li>
-            <li>Dans <em>Contrôles + Caméra</em> :
+          <ol class="help-steps">
+            <li><strong>Connexion réseau :</strong> connectez votre téléphone/PC au réseau de l’ESP32 (<code>192.168.4.1</code> en AP ou votre LAN).</li>
+            <li><strong>Configurer les URLs :</strong> dans l’onglet <em>Contrôles + Caméra</em>, renseignez :
               <ul>
-                <li><strong>Flux MJPEG</strong> : ex. <code>http://192.168.4.1:81/stream</code>.</li>
-                <li><strong>Base HTTP</strong> : ex. <code>http://192.168.4.1</code>.</li>
+                <li><strong>Flux MJPEG</strong> → ex. <code>http://192.168.4.1:81/stream</code></li>
+                <li><strong>Base HTTP</strong> → ex. <code>http://192.168.4.1</code></li>
               </ul>
             </li>
-            <li>Commandes : HTTP <code>/cmd?c=F|B|L|R|S</code>.</li>
-            <li><strong>Contrôles</strong> : flèches ou ZQSD ; <code>Espace</code>=STOP.</li>
-            <li>Sur iPhone : onglet <em>Caméra seule</em> → bouton <em>Plein écran</em>.</li>
+            <li><strong>Tester la liaison :</strong> cliquez sur <em>Test HTTP</em>, puis vérifiez le statut (<em>HTTP OK</em>).</li>
           </ol>
+
+          <div class="help-grid" style="margin-top:12px">
+            <article class="help-block">
+              <h3>Commandes voiture</h3>
+              <ul>
+                <li>Endpoint: <code>/cmd?c=F|B|L|R|S</code></li>
+                <li><span class="help-kbd">↑ / Z</span> Avancer</li>
+                <li><span class="help-kbd">↓ / S</span> Reculer</li>
+                <li><span class="help-kbd">← / Q</span> Gauche</li>
+                <li><span class="help-kbd">→ / D</span> Droite</li>
+                <li><span class="help-kbd">Espace</span> STOP</li>
+              </ul>
+            </article>
+
+            <article class="help-block">
+              <h3>Caméra & iPhone</h3>
+              <ul>
+                <li>Utilisez l’onglet <em>Caméra seule</em> pour un affichage plein écran.</li>
+                <li>Appuyez sur <em>Plein écran</em> puis <em>Anti-veille</em> si disponible.</li>
+                <li>En cas d’écran noir : <em>Recharger</em> puis vérifier l’URL MJPEG.</li>
+                <li>En paysage, le champ de vision est plus confortable.</li>
+              </ul>
+            </article>
+
+            <article class="help-block">
+              <h3>Dépannage rapide</h3>
+              <ul>
+                <li><strong>HTTP KO :</strong> vérifier la base HTTP et le Wi-Fi.</li>
+                <li><strong>Flux indisponible :</strong> vérifier le port <code>:81/stream</code>.</li>
+                <li><strong>Latence :</strong> réduire la distance Wi-Fi et fermer les applis en arrière-plan.</li>
+                <li><strong>Sécurité :</strong> tester d’abord roues levées, garder le STOP accessible.</li>
+              </ul>
+            </article>
+
+            <article class="help-block">
+              <h3>Télémétrie (optionnelle)</h3>
+              <ul>
+                <li>JSON: <code>/telemetry</code> (speed + battery)</li>
+                <li>Fallback: <code>/speed</code> et <code>/battery</code></li>
+                <li>Le polling est HTTP uniquement (pas de WebSocket/MQTT).</li>
+              </ul>
+            </article>
+          </div>
         </div>
       </div>
     </section>
@@ -502,10 +567,15 @@
     };
 
     const TELEMETRY = {
-      intervalMs: 700,
+      slowMs: 1200,
+      fastMs: 450,
       endpointJson: "/telemetry",
       endpointSpeed: "/speed",
       endpointBattery: "/battery"
+    };
+
+    const COMMAND = {
+      minGapMs: 80
     };
 
     function notify(msg, level="err", actions=[]){
@@ -527,6 +597,26 @@
     const param=(key,fallback)=> qp.get(key) || fallback;
     const DEMO = qp.get("demo")==="1";
 
+    const UI_TEXT = {
+      fsEnter: "Plein écran",
+      fsExit: "Quitter plein écran"
+    };
+
+    function setText(el, value){ if(el) el.textContent = value; }
+
+    function setAlertMessage(alertEl, message){
+      if(!alertEl) return;
+      const textNode = Array.from(alertEl.childNodes).find((n)=>n.nodeType===Node.TEXT_NODE);
+      if(textNode) textNode.textContent = `${message} `;
+      else alertEl.prepend(document.createTextNode(`${message} `));
+    }
+
+    function updateViewportUnit(){
+      const h = window.visualViewport?.height || window.innerHeight || document.documentElement.clientHeight || 0;
+      if(h>0) document.documentElement.style.setProperty("--vh", `${h * 0.01}px`);
+      return h;
+    }
+
     // Header
     const headerEl=$("#appHeader");
     const logoEl=$("#logo"), teamEl=$("#team");
@@ -541,8 +631,10 @@
     // Tabs
     const tabFull=$("#tabFull"), tabCam=$("#tabCam"), tabHelp=$("#tabHelp");
     const viewFull=$("#view-full"), viewCam=$("#view-cam"), viewHelp=$("#view-help");
+    let streamFullWrap=null, streamCamWrap=null;
     function setView(v){
       const isFull=v==="full", isCam=v==="cam", isHelp=v==="help";
+      if(!isCam) exitFakeFullscreen(streamCamWrap);
       viewFull.classList.toggle("active", isFull);
       viewCam.classList.toggle("active", isCam);
       viewHelp.classList.toggle("active", isHelp);
@@ -561,17 +653,31 @@
     const streamUrl=$("#streamUrl"), streamUrlCam=$("#streamUrlCam");
     const applyStream=$("#applyStream"), reloadStream=$("#reloadStream");
     const applyStreamCam=$("#applyStreamCam"), reloadStreamCam=$("#reloadStreamCam");
-    const streamFullWrap=$("#streamFullWrap"), streamCamWrap=$("#streamCamWrap");
+    streamFullWrap=$("#streamFullWrap");
+    streamCamWrap=$("#streamCamWrap");
     const retryFull=$("#retryFull"), retryCam=$("#retryCam");
     const btnDisconnectStream=$("#disconnectStream");
     const btnDisconnectStreamCam=$("#disconnectStreamCam");
-    const fpsBadge=$("#fpsBadge"); let _lastFrameAt=null, _fpsAvg=0;
+    const fpsBadge=$("#fpsBadge");
+    const FPS_WINDOW_MS = 4000;
+    const FPS_STALE_MS = 1600;
+    let _fpsFrameTimes=[];
+    let _fpsLastEventAt=0;
+    let _fpsUiTimer=null;
+    let _fpsStatsTimer=null;
+    let _fpsServerValue=null;
+    let _fpsServerAt=0;
 
     const streamDefault = param("stream", DEFAULTS.STREAM_URL);
+    resetFps();
+    startFpsLoop();
+    startFpsStatsPolling();
     setStream(streamDefault);
 
     function setStream(url){
+      resetFps();
       imgFull.src=url; imgCam.src=url;
+      pollServerFpsOnce();
       streamUrl.value=url; streamUrlCam.value=url;
       clearStreamError(true); clearStreamError(false);
     }
@@ -587,31 +693,104 @@
       const wrap = full ? streamFullWrap : streamCamWrap;
       wrap.classList.add("error");
       const alert = full ? $("#alertFull") : $("#alertCam");
-      if(alert && alert.firstChild) alert.firstChild.textContent = message || "Flux vidéo indisponible.";
+      setAlertMessage(alert, message || "Flux vidéo indisponible.");
     }
     function clearStreamError(full){
       const wrap = full ? streamFullWrap : streamCamWrap;
       wrap.classList.remove("error");
     }
-    function updateFPS(){
-      const now=performance.now();
-      if(_lastFrameAt!=null){
-        const dt=(now-_lastFrameAt)/1000;
-        const fps=1/dt;
-        _fpsAvg=_fpsAvg*0.8+fps*0.2;
-        fpsBadge.textContent="FPS "+Math.max(0,Math.round(_fpsAvg)).toString().padStart(2,"0");
-        fpsBadge.className="badge "+(_fpsAvg>20?"ok":_fpsAvg>10?"warn":"err");
+    function trimFpsSamples(now){
+      while(_fpsFrameTimes.length && (now - _fpsFrameTimes[0]) > FPS_WINDOW_MS){
+        _fpsFrameTimes.shift();
       }
-      _lastFrameAt=now;
     }
 
-    imgFull.addEventListener("load", ()=>{ clearStreamError(true); updateFPS(); });
-    imgCam .addEventListener("load", ()=>  clearStreamError(false));
+    function setFpsBadgeValue(label, level="warn"){
+      fpsBadge.textContent = label;
+      fpsBadge.className = "badge " + level;
+    }
+
+    function resetFps(){
+      _fpsFrameTimes=[];
+      _fpsLastEventAt=0;
+      _fpsServerValue=null;
+      _fpsServerAt=0;
+      setFpsBadgeValue("FPS --", "warn");
+    }
+
+    function registerFrameTick(){
+      const now = performance.now();
+      _fpsLastEventAt = now;
+      _fpsFrameTimes.push(now);
+      trimFpsSamples(now);
+    }
+
+    function getStatsEndpoint(){
+      try{
+        const streamSrc = (imgFull?.src || "").trim();
+        if(!streamSrc) return "";
+        const u = new URL(streamSrc, location.href);
+        if(!/^https?:$/i.test(u.protocol)) return "";
+        return `${u.origin}/stats`;
+      }catch{ return ""; }
+    }
+
+    async function pollServerFpsOnce(){
+      const endpoint = getStatsEndpoint();
+      if(!endpoint) return;
+      try{
+        const res = await fetch(endpoint, { cache:"no-store" });
+        if(!res.ok) return;
+        const data = await res.json();
+        if(Number.isFinite(data?.fps)){
+          _fpsServerValue = Math.max(0, Number(data.fps));
+          _fpsServerAt = performance.now();
+        }
+      }catch{}
+    }
+
+    function startFpsStatsPolling(){
+      if(_fpsStatsTimer) clearInterval(_fpsStatsTimer);
+      _fpsStatsTimer = setInterval(()=>pollServerFpsOnce(), 1000);
+      pollServerFpsOnce();
+    }
+
+    function refreshFpsBadge(){
+      const now = performance.now();
+      trimFpsSamples(now);
+
+      if(_fpsServerValue!=null && (now - _fpsServerAt) < FPS_STALE_MS){
+        const fps = _fpsServerValue;
+        const rounded = Math.max(0, Math.round(fps));
+        setFpsBadgeValue("FPS " + String(rounded).padStart(2,"0"), fps > 20 ? "ok" : fps > 10 ? "warn" : "err");
+        return;
+      }
+
+      if(_fpsFrameTimes.length < 2 || (now - _fpsLastEventAt) > FPS_STALE_MS){
+        setFpsBadgeValue("FPS --", _fpsLastEventAt ? "err" : "warn");
+        return;
+      }
+
+      const elapsedMs = _fpsFrameTimes[_fpsFrameTimes.length - 1] - _fpsFrameTimes[0];
+      const fps = elapsedMs > 0 ? ((_fpsFrameTimes.length - 1) * 1000 / elapsedMs) : 0;
+      const rounded = Math.max(0, Math.round(fps));
+      setFpsBadgeValue("FPS " + String(rounded).padStart(2,"0"), fps > 20 ? "ok" : fps > 10 ? "warn" : "err");
+    }
+
+    function startFpsLoop(){
+      if(_fpsUiTimer) clearInterval(_fpsUiTimer);
+      _fpsUiTimer = setInterval(refreshFpsBadge, 250);
+    }
+
+    imgFull.addEventListener("load", ()=>{ clearStreamError(true); registerFrameTick(); });
+    imgCam .addEventListener("load", ()=>{ clearStreamError(false); registerFrameTick(); });
     imgFull.addEventListener("error", ()=>{
+      resetFps();
       showStreamError(true, "Flux vidéo indisponible (URL invalide, caméra arrêtée ou réseau HS).");
       notify("Erreur flux vidéo (vue complète).", "err", [{id:"r",label:"Réessayer",onClick:()=>reloadImg(imgFull)}]);
     });
     imgCam.addEventListener("error", ()=>{
+      resetFps();
       showStreamError(false, "Flux vidéo indisponible (URL invalide, caméra arrêtée ou réseau HS).");
       notify("Erreur flux vidéo (vue caméra).", "err", [{id:"r",label:"Réessayer",onClick:()=>reloadImg(imgCam)}]);
     });
@@ -634,7 +813,8 @@
       const wrap  = full ? streamFullWrap : streamCamWrap;
       const alert = full ? $("#alertFull") : $("#alertCam");
       wrap.classList.add("error");
-      if(alert && alert.firstChild) alert.firstChild.textContent="Flux déconnecté par l’utilisateur.";
+      resetFps();
+      setAlertMessage(alert, "Flux déconnecté par l’utilisateur.");
       notify("Flux vidéo déconnecté.", "warn");
     }
     btnDisconnectStream.addEventListener("click", ()=>disconnectStream(imgFull,true));
@@ -677,30 +857,36 @@
 
     function setFsHeight(el){
       if(!el) return;
-      const h = (window.visualViewport?.height || window.innerHeight || 0);
+      const h = updateViewportUnit();
       if(h) el.style.height = h + "px";
     }
 
     function isFs(el){ return el?.classList.contains("fs"); }
 
+    let preFsScrollY = 0;
+
     function enterFakeFullscreen(el){
       if(!el) return;
+      preFsScrollY = window.scrollY || 0;
       document.body.classList.add("fs-lock");
+      document.body.style.top = `-${preFsScrollY}px`;
       headerEl?.classList.add("hidden");
       el.classList.add("fs");
       setFsHeight(el);
       window.scrollTo(0,0);
-      btnFS.textContent = "Quitter plein écran";
+      setText(btnFS, UI_TEXT.fsExit);
       enableWakeLock();
     }
 
     function exitFakeFullscreen(el){
-      if(!el) return;
+      if(!el || !isFs(el)) return;
       el.classList.remove("fs");
       el.style.height = "";
       headerEl?.classList.remove("hidden");
       document.body.classList.remove("fs-lock");
-      btnFS.textContent = "Plein écran";
+      document.body.style.top = "";
+      window.scrollTo(0, preFsScrollY);
+      setText(btnFS, UI_TEXT.fsEnter);
     }
 
     async function requestFullscreenOrFallback(el){
@@ -708,7 +894,7 @@
       try{
         if(el.requestFullscreen){
           await el.requestFullscreen();
-          btnFS.textContent = "Quitter plein écran";
+          setText(btnFS, UI_TEXT.fsExit);
           enableWakeLock();
           return;
         }
@@ -721,20 +907,23 @@
       if(isFs(el)){ exitFakeFullscreen(el); return; }
       if(document.fullscreenElement){
         try{ await document.exitFullscreen(); }catch{}
-        btnFS.textContent = "Plein écran";
+        setText(btnFS, UI_TEXT.fsEnter);
         return;
       }
       await requestFullscreenOrFallback(el);
     });
 
-    window.addEventListener("resize", ()=>{ if(isFs(streamCamWrap)) setFsHeight(streamCamWrap); });
-    window.visualViewport?.addEventListener("resize", ()=>{ if(isFs(streamCamWrap)) setFsHeight(streamCamWrap); });
+    window.addEventListener("resize", ()=>{ if(isFs(streamCamWrap)) setFsHeight(streamCamWrap); else updateViewportUnit(); });
+    window.addEventListener("orientationchange", ()=>{ setTimeout(()=>{ if(isFs(streamCamWrap)) setFsHeight(streamCamWrap); else updateViewportUnit(); }, 120); });
+    window.visualViewport?.addEventListener("resize", ()=>{ if(isFs(streamCamWrap)) setFsHeight(streamCamWrap); else updateViewportUnit(); });
 
     document.addEventListener("fullscreenchange", ()=>{
       if(!document.fullscreenElement){
-        btnFS.textContent="Plein écran";
+        setText(btnFS, UI_TEXT.fsEnter);
       }
     });
+
+    window.addEventListener("pagehide", ()=>exitFakeFullscreen(streamCamWrap));
 
     // ===== UI Telemetry (speed/batt)
     const speedValBig=$("#speedValBig");
@@ -828,7 +1017,41 @@
       }
     }
 
-    function sendCommand(cmd){ sendOverHTTP(cmd); }
+    let lastCmdSent="";
+    let lastCmdAt=0;
+    let cmdInFlight=false;
+    let queuedCmd=null;
+
+    function shouldSkipCommand(cmd){
+      const now = Date.now();
+      return cmd===lastCmdSent && (now-lastCmdAt)<COMMAND.minGapMs;
+    }
+
+    async function flushQueuedCommand(){
+      if(!queuedCmd) return;
+      const next=queuedCmd;
+      queuedCmd=null;
+      await sendCommand(next);
+    }
+
+    async function sendCommand(cmd){
+      setTelemetryMode(cmd!=="S");
+      if(shouldSkipCommand(cmd)) return;
+
+      if(cmdInFlight){
+        queuedCmd=cmd;
+        return;
+      }
+
+      cmdInFlight=true;
+      lastCmdSent=cmd;
+      lastCmdAt=Date.now();
+      try{ await sendOverHTTP(cmd); }
+      finally{
+        cmdInFlight=false;
+        await flushQueuedCommand();
+      }
+    }
 
     $("#btnStop").addEventListener("click", ()=>sendCommand("S"));
     $("#btnTest").addEventListener("click", async ()=>{
@@ -868,10 +1091,25 @@
     }
 
     let telemTimer=null;
-    function startTelemetry(){
+    let telemIntervalMs=TELEMETRY.slowMs;
+
+    function restartTelemetryTimer(){
       if(telemTimer) clearInterval(telemTimer);
       if(DEMO) return;
-      telemTimer = setInterval(()=>pollTelemetryOnce(), TELEMETRY.intervalMs);
+      telemTimer = setInterval(()=>pollTelemetryOnce(), telemIntervalMs);
+    }
+
+    function setTelemetryMode(isMoving){
+      const targetMs = isMoving ? TELEMETRY.fastMs : TELEMETRY.slowMs;
+      if(targetMs===telemIntervalMs) return;
+      telemIntervalMs=targetMs;
+      restartTelemetryTimer();
+    }
+
+    function startTelemetry(){
+      setTelemetryMode(false);
+      if(DEMO) return;
+      restartTelemetryTimer();
       pollTelemetryOnce();
     }
     httpBaseEl.addEventListener("change", startTelemetry);
@@ -938,15 +1176,43 @@
     document.addEventListener("visibilitychange", ()=>{ if(document.hidden) sendCommand("S"); });
 
     // Boutons
-    $$(".controls .btn").forEach(b=>{
-      const dir=b.getAttribute("data-dir");
+    $$(".controls .btn").forEach((btn)=>{
+      const dir=btn.getAttribute("data-dir");
       const cmd = dir==="forward"?"F":dir==="backward"?"B":dir==="left"?"L":dir==="right"?"R":"S";
-      b.addEventListener("mousedown", ()=>{ b.classList.add("down"); sendCommand(cmd); });
-      b.addEventListener("mouseup", ()=>{ b.classList.remove("down"); sendCommand("S"); });
-      b.addEventListener("mouseleave", ()=>b.classList.remove("down"));
-      b.addEventListener("touchstart",(e)=>{ e.preventDefault(); b.classList.add("down"); sendCommand(cmd); },{passive:false});
-      b.addEventListener("touchend",(e)=>{ e.preventDefault(); b.classList.remove("down"); sendCommand("S"); },{passive:false});
+      let activePointer=null;
+
+      const press=()=>{ btn.classList.add("down"); sendCommand(cmd); };
+      const release=(sendStop=true)=>{
+        btn.classList.remove("down");
+        if(sendStop) sendCommand("S");
+      };
+
+      btn.addEventListener("pointerdown", (event)=>{
+        event.preventDefault();
+        activePointer = event.pointerId;
+        btn.setPointerCapture?.(event.pointerId);
+        press();
+      });
+      btn.addEventListener("pointerup", (event)=>{
+        if(activePointer !== event.pointerId) return;
+        activePointer = null;
+        release(true);
+      });
+      btn.addEventListener("pointercancel", (event)=>{
+        if(activePointer !== event.pointerId) return;
+        activePointer = null;
+        release(true);
+      });
+      btn.addEventListener("lostpointercapture", ()=>{
+        if(activePointer !== null){
+          activePointer = null;
+          release(true);
+        }
+      });
+      btn.addEventListener("contextmenu", (event)=>event.preventDefault());
     });
+
+    updateViewportUnit();
 
     // DEMO
     if(DEMO){
