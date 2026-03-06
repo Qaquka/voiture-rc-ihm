@@ -1124,10 +1124,10 @@
     }
     function keyToCmd(evt){
       const k=(evt.key||"").toLowerCase();
-      if(k==="arrowup" || k==="z") return "F";
-      if(k==="arrowdown" || k==="s") return "B";
-      if(k==="arrowleft" || k==="q") return "L";
-      if(k==="arrowright" || k==="d") return "R";
+      if(k==="arrowup" || k==="z") return "A";
+      if(k==="arrowdown" || k==="s") return "R";
+      if(k==="arrowleft" || k==="q") return "G";
+      if(k==="arrowright" || k==="d") return "D";
       if(k===" " || k==="space" || k==="spacebar") return "S";
       return null;
     }
@@ -1178,7 +1178,7 @@
     // Boutons
     $$(".controls .btn").forEach((btn)=>{
       const dir=btn.getAttribute("data-dir");
-      const cmd = dir==="forward"?"F":dir==="backward"?"B":dir==="left"?"L":dir==="right"?"R":"S";
+      const cmd = dir==="forward"?"A":dir==="backward"?"R":dir==="left"?"G":dir==="right"?"D":"S";
       let activePointer=null;
 
       const press=()=>{ btn.classList.add("down"); sendCommand(cmd); };
