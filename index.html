@@ -14,14 +14,13 @@
     }
     *{ box-sizing:border-box; }
 
-    /* ✅ fond uniforme (plus de “cassure”) */
     html,body{
       margin:0; height:100%;
       background:#0b1220;
       color:var(--text);
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,"Noto Sans";
     }
-    /* petit “glow” doux sans séparation */
+
     body::before{
       content:"";
       position:fixed;
@@ -111,7 +110,6 @@
     }
     .stream.error .alert{ display:block; }
 
-    /* ====== FAKE FULLSCREEN (iPhone Safari friendly) ====== */
     body.fs-lock{ overflow:hidden; touch-action:none; position:fixed; width:100%; }
     header.hidden{ display:none; }
 
@@ -119,7 +117,7 @@
       position:fixed !important;
       inset:0 !important;
       width:100vw !important;
-      height:calc(var(--vh, 1vh) * 100) !important; /* ajusté via JS iOS */
+      height:calc(var(--vh, 1vh) * 100) !important;
       border-radius:0 !important;
       border:none !important;
       z-index:99999 !important;
@@ -141,7 +139,46 @@
     .meta{ display:flex; gap:12px; flex-wrap:wrap; color:var(--muted); font-size:.92rem; }
     .tag{ padding:4px 8px; border:1px solid rgba(255,255,255,.08); border-radius:999px; }
 
-    /* Grille commandes */
+    .speed-panel{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin:2px 0 14px;
+    }
+    .speed-label{
+      color:var(--muted);
+      font-size:.92rem;
+      font-weight:600;
+      min-width:70px;
+    }
+    .speed-buttons{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .speed-btn{
+      min-width:74px;
+      text-align:center;
+      user-select:none;
+      cursor:pointer;
+      border-radius:12px;
+      padding:10px 12px;
+      background:#111827;
+      border:1px solid rgba(255,255,255,.1);
+      box-shadow:var(--shadow);
+      font-weight:700;
+      transition:transform .05s ease, border-color .2s ease, background .2s ease;
+    }
+    .speed-btn:hover{
+      border-color:rgba(56,189,248,.45);
+    }
+    .speed-btn.active{
+      outline:2px solid var(--accent);
+      border-color:var(--accent);
+      background:rgba(56,189,248,.14);
+    }
+
     .controls{
       display:grid;
       grid-template-columns: repeat(3, minmax(0,1fr));
@@ -161,7 +198,6 @@
     .btn:active,.btn.down{ transform: scale(.98); outline:2px solid var(--accent); border-color:var(--accent); }
     .btn[data-dir="stop"]{ grid-column:1/-1; background:#1f2937; }
 
-    /* Views */
     .view{ display:none; }
     .view.active{ display:block; }
 
@@ -172,7 +208,6 @@
       background:rgba(255,255,255,.03);
     }
 
-    /* Toasts */
     #toast{
       position: fixed; bottom: 14px; left: 50%;
       transform: translateX(-50%);
@@ -195,7 +230,6 @@
       padding: 6px 10px; border-radius: 8px; cursor: pointer;
     }
 
-    /* ========= HUD (overlay) ========= */
     .hud{
       position:absolute; bottom:0; left:0; right:0;
       background:linear-gradient(180deg, rgba(15,23,42,.18), rgba(2,6,23,.78));
@@ -205,8 +239,6 @@
       padding:12px 16px;
       font-weight:700;
       z-index:3;
-
-      /* ✅ batterie à droite + vitesse centrée "réelle" */
       display:flex;
       align-items:center;
       justify-content:space-between;
@@ -214,7 +246,6 @@
     .hud-left{ min-width:1px; }
     .hud-right{ margin-left:auto; display:flex; align-items:center; }
 
-    /* ✅ centrage réel indépendant de la batterie */
     .hud-center{
       position:absolute;
       left:50%;
@@ -225,7 +256,6 @@
       pointer-events:none;
     }
 
-    /* Vitesse (un poil plus grande) */
     .speedBig{
       display:flex; align-items:baseline; gap:12px;
       font-size:3.4rem;
@@ -237,7 +267,6 @@
     .speedBig .num{ font-size:3.6rem; font-variant-numeric: tabular-nums; }
     .speedBig .unit{ font-size:1.05rem; opacity:.92; margin-bottom:6px; }
 
-    /* Batterie segments (un poil plus visible) */
     .batt{ display:flex; align-items:center; gap:8px; }
     .batt-pack{
       display:grid; grid-auto-flow:column; gap:3px; padding:2px 5px; border-radius:7px;
@@ -256,7 +285,6 @@
     .blink{ animation: blink 1s infinite; }
     @keyframes blink { 0%,60%{opacity:1} 61%,100%{opacity:.2} }
 
-    /* Statut HTTP */
     .http-badge{
       padding:3px 8px; border-radius:999px;
       border:1px solid rgba(255,255,255,.18);
@@ -267,14 +295,10 @@
     .http-warn{ background:rgba(245,158,11,.18); border-color:rgba(245,158,11,.55); }
     .http-err{ background:rgba(239,68,68,.18); border-color:rgba(239,68,68,.55); }
 
-    /* Barre touches actives */
     .keys{ display:flex; gap:6px; align-items:center; font-size:.9rem; color:var(--muted); margin-left:auto; }
     .key{ border:1px solid rgba(255,255,255,.2); padding:2px 6px; border-radius:6px; min-width:20px; text-align:center;}
-    .key.on{ background:rgba(56,189,248,.15); border-color:rgba(56,189,248,.6); color:#fff;}
+    .key.on{ background:rgba(56,189,248,.15); border-color:rgba(56,189,248,.6); color:#fff; }
 
-
-
-    /* Aide */
     .help-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
     .help-block{
       background:rgba(255,255,255,.03);
@@ -289,7 +313,6 @@
     .help-steps li{ margin:10px 0; }
     .help-kbd{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.85rem; padding:2px 6px; border:1px solid rgba(255,255,255,.25); border-radius:6px; background:rgba(255,255,255,.06); }
 
-    /* ===== Responsive auto ===== */
     @media (max-width: 900px){
       main{ max-width:100%; padding:0 10px; margin:10px auto 14px; }
       .card .content{ padding:12px; }
@@ -314,11 +337,15 @@
       .speedBig{ font-size:2.6rem; }
       .speedBig .num{ font-size:2.8rem; }
       .cell{ width:11px; height:17px; }
+      .speed-label{ width:100%; min-width:auto; }
     }
 
-    /* Isolé pour limiter les conflits de merge avec les réglages HUD mobile */
     @media (max-width: 640px){
       .help-grid{ grid-template-columns:1fr; }
+    }
+
+    button, .btn, .speed-btn, .tabbtn, button.link{
+      color:#fff !important;
     }
   </style>
 </head>
@@ -337,7 +364,6 @@
   </header>
 
   <main>
-    <!-- ========================= VUE FULL ========================= -->
     <section id="view-full" class="view active">
       <div class="card" id="cardVideo">
         <h2>
@@ -360,7 +386,6 @@
           </div>
 
           <div class="stream" id="streamFullWrap">
-            <!-- HUD FULL -->
             <div class="hud" id="hudFull" aria-live="polite">
               <div class="hud-left"></div>
 
@@ -415,6 +440,16 @@
             <button id="btnStop" class="link danger">STOP</button>
           </div>
 
+          <div class="speed-panel" aria-label="Réglage vitesse moteurs">
+            <div class="speed-label">Puissance :</div>
+            <div class="speed-buttons">
+              <button class="speed-btn active" type="button" data-speed="0">25%</button>
+              <button class="speed-btn" type="button" data-speed="1">50%</button>
+              <button class="speed-btn" type="button" data-speed="2">75%</button>
+              <button class="speed-btn" type="button" data-speed="3">100%</button>
+            </div>
+          </div>
+
           <div class="controls" aria-label="Boutons de direction">
             <div></div>
             <div class="btn" data-dir="forward" aria-label="Avancer (↑ / Z)">↑ / Z</div>
@@ -429,11 +464,10 @@
             <div></div>
           </div>
         </div>
-        <div class="foot">Commandes HTTP : <code>/cmd?c=F|B|L|R|S</code>. Télémétrie (optionnel) : config JS.</div>
+        <div class="foot">Commandes HTTP : <code>/cmd?c=A|R|G|D|S|0|1|2|3</code>. Réglage puissance : <code>0=25%</code>, <code>1=50%</code>, <code>2=75%</code>, <code>3=100%</code>.</div>
       </div>
     </section>
 
-    <!-- ========================= VUE CAM ONLY ========================= -->
     <section id="view-cam" class="view">
       <div class="card">
         <h2>Caméra seule (vue mobile)</h2>
@@ -448,7 +482,6 @@
           </div>
 
           <div class="stream" id="streamCamWrap" style="margin-top:10px">
-            <!-- HUD CAM -->
             <div class="hud" id="hudCam" aria-live="polite">
               <div class="hud-left"></div>
 
@@ -488,7 +521,6 @@
       </div>
     </section>
 
-    <!-- ========================= VUE HELP ========================= -->
     <section id="view-help" class="view help">
       <div class="card">
         <h2>Aide – Mise en route rapide</h2>
@@ -508,12 +540,16 @@
             <article class="help-block">
               <h3>Commandes voiture</h3>
               <ul>
-                <li>Endpoint: <code>/cmd?c=F|B|L|R|S</code></li>
+                <li>Endpoint: <code>/cmd?c=A|R|G|D|S|0|1|2|3</code></li>
                 <li><span class="help-kbd">↑ / Z</span> Avancer</li>
                 <li><span class="help-kbd">↓ / S</span> Reculer</li>
                 <li><span class="help-kbd">← / Q</span> Gauche</li>
                 <li><span class="help-kbd">→ / D</span> Droite</li>
                 <li><span class="help-kbd">Espace</span> STOP</li>
+                <li><span class="help-kbd">0</span> 25%</li>
+                <li><span class="help-kbd">1</span> 50%</li>
+                <li><span class="help-kbd">2</span> 75%</li>
+                <li><span class="help-kbd">3</span> 100%</li>
               </ul>
             </article>
 
@@ -617,7 +653,6 @@
       return h;
     }
 
-    // Header
     const headerEl=$("#appHeader");
     const logoEl=$("#logo"), teamEl=$("#team");
     if(logoEl){
@@ -628,7 +663,6 @@
       teamEl.textContent = "Équipe : " + decodeURIComponent(param("team", encodeURIComponent(DEFAULTS.TEAM_TXT)));
     }
 
-    // Tabs
     const tabFull=$("#tabFull"), tabCam=$("#tabCam"), tabHelp=$("#tabHelp");
     const viewFull=$("#view-full"), viewCam=$("#view-cam"), viewHelp=$("#view-help");
     let streamFullWrap=null, streamCamWrap=null;
@@ -648,7 +682,6 @@
     tabCam .addEventListener("click", ()=>setView("cam"));
     tabHelp.addEventListener("click", ()=>setView("help"));
 
-    // Streams
     const imgFull=$("#imgFull"), imgCam=$("#imgCam");
     const streamUrl=$("#streamUrl"), streamUrlCam=$("#streamUrlCam");
     const applyStream=$("#applyStream"), reloadStream=$("#reloadStream");
@@ -820,14 +853,12 @@
     btnDisconnectStream.addEventListener("click", ()=>disconnectStream(imgFull,true));
     btnDisconnectStreamCam.addEventListener("click", ()=>disconnectStream(imgCam,false));
 
-    // Ajustement vidéo
     const cardVideo=$("#cardVideo"), btnFit=$("#btnFit");
     btnFit.addEventListener("click", ()=>{
       cardVideo.classList.toggle("fit-fill");
       btnFit.textContent="Ajustement: "+(cardVideo.classList.contains("fit-fill")?"Fill":"Contain");
     });
 
-    // Ouvrir cam only
     $("#openCamOnly").addEventListener("click", ()=>{
       const u=(streamUrl.value||DEFAULTS.STREAM_URL).trim();
       const hb=(($("#httpBase").value||DEFAULTS.HTTP_BASE).trim());
@@ -835,7 +866,6 @@
       window.open(url,"_blank");
     });
 
-    // ===== Wake Lock
     const btnWake=$("#btnWake");
     let wakeLock=null;
     async function enableWakeLock(fromBtn=false){
@@ -851,7 +881,6 @@
     }
     btnWake.addEventListener("click", ()=>enableWakeLock(true));
 
-    // ===== Plein écran compatible iPhone Safari
     const btnFS=$("#btnFS"), btnReload=$("#btnReload");
     btnReload.addEventListener("click", ()=>reloadImg(imgCam));
 
@@ -925,7 +954,6 @@
 
     window.addEventListener("pagehide", ()=>exitFakeFullscreen(streamCamWrap));
 
-    // ===== UI Telemetry (speed/batt)
     const speedValBig=$("#speedValBig");
     const speedValCam=$("#speedValCam");
     const battVal=$("#battVal"), battValCam=$("#battValCam");
@@ -933,6 +961,9 @@
 
     const httpDot=$("#httpDot"), httpStatus=$("#httpStatus"), httpBadge=$("#httpBadge");
     const httpBaseEl=$("#httpBase");
+    const speedButtons = $$(".speed-btn");
+    let selectedSpeed = "0";
+
     httpBaseEl.value = param("http", DEFAULTS.HTTP_BASE);
 
     function setHttpState(state, txt){
@@ -943,6 +974,13 @@
       else { httpBadge.classList.add("http-err"); }
       httpStatus.textContent = txt || "—";
       httpBadge.textContent = state.toUpperCase();
+    }
+
+    function setActiveSpeed(level){
+      selectedSpeed = String(level);
+      speedButtons.forEach((btn)=>{
+        btn.classList.toggle("active", btn.dataset.speed === selectedSpeed);
+      });
     }
 
     function clamp(n,min,max){ return Math.max(min, Math.min(max,n)); }
@@ -993,7 +1031,6 @@
       setCells(battPack,n); setCells(battPackCam,n);
     }
 
-    // ===== HTTP commands
     async function sendOverHTTP(cmd, silent=false){
       const base=(httpBaseEl.value||"").trim().replace(/\/+$/,"");
       if(!/^https?:\/\//i.test(base)){
@@ -1052,6 +1089,22 @@
         await flushQueuedCommand();
       }
     }
+
+    async function sendSpeed(level){
+      const lvl = String(level);
+      if(!/^[0-3]$/.test(lvl)) return;
+      const ok = await sendOverHTTP(lvl);
+      if(ok){
+        setActiveSpeed(lvl);
+        notify(`Puissance réglée sur ${lvl==="0"?"25":lvl==="1"?"50":lvl==="2"?"75":"100"}%`, "ok");
+        await pollTelemetryOnce();
+      }
+    }
+
+    speedButtons.forEach((btn)=>{
+      btn.addEventListener("click", ()=>sendSpeed(btn.dataset.speed));
+    });
+    setActiveSpeed("0");
 
     $("#btnStop").addEventListener("click", ()=>sendCommand("S"));
     $("#btnTest").addEventListener("click", async ()=>{
@@ -1114,7 +1167,6 @@
     }
     httpBaseEl.addEventListener("change", startTelemetry);
 
-    // ===== touches + clavier
     const keyEls={ArrowUp:$("#kUp"), ArrowLeft:$("#kLeft"), ArrowDown:$("#kDown"), ArrowRight:$("#kRight"), Space:$("#kSpace")};
     const pressed=new Set();
 
@@ -1129,10 +1181,18 @@
       if(k==="arrowleft" || k==="q") return "G";
       if(k==="arrowright" || k==="d") return "D";
       if(k===" " || k==="space" || k==="spacebar") return "S";
+      if(k==="0") return "0";
+      if(k==="1") return "1";
+      if(k==="2") return "2";
+      if(k==="3") return "3";
       return null;
     }
     function sendDirFromKey(evt, down){
       const cmd=keyToCmd(evt); if(!cmd) return;
+      if(["0","1","2","3"].includes(cmd)){
+        if(down) sendSpeed(cmd);
+        return;
+      }
       if(cmd==="S"){ sendCommand("S"); return; }
       if(down) sendCommand(cmd);
       else sendCommand("S");
@@ -1169,13 +1229,13 @@
       if(e.key==="ArrowRight") keyEls.ArrowRight.classList.remove("on");
       if(e.key===" ") keyEls.Space.classList.remove("on");
 
+      if(["0","1","2","3"].includes(cmd)) return;
       sendDirFromKey(e,false);
     },{passive:false});
 
     window.addEventListener("blur", ()=>sendCommand("S"));
     document.addEventListener("visibilitychange", ()=>{ if(document.hidden) sendCommand("S"); });
 
-    // Boutons
     $$(".controls .btn").forEach((btn)=>{
       const dir=btn.getAttribute("data-dir");
       const cmd = dir==="forward"?"A":dir==="backward"?"R":dir==="left"?"G":dir==="right"?"D":"S";
@@ -1214,7 +1274,6 @@
 
     updateViewportUnit();
 
-    // DEMO
     if(DEMO){
       setHttpState("ok","DEMO");
       notify("Mode démo actif : données simulées.", "ok");
