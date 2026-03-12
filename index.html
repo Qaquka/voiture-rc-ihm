@@ -66,10 +66,6 @@
       border-bottom:1px solid rgba(255,255,255,.08);
       display:flex; align-items:center; gap:10px;
     }
-    .badge{ font-size:.75rem; padding:3px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.14); color:#fff; }
-    .badge.ok{ background:rgba(16,185,129,.2); border-color:rgba(16,185,129,.6); }
-    .badge.warn{ background:rgba(245,158,11,.2); border-color:rgba(245,158,11,.6); }
-    .badge.err{ background:rgba(239,68,68,.2); border-color:rgba(239,68,68,.6); }
 
     .card .content{ padding:14px; }
     .row{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
@@ -301,7 +297,6 @@
       <div class="card" id="cardVideo">
         <h2>
           Flux vidéo
-          <span class="badge" id="fpsBadge" title="Images/seconde estimées">FPS --</span>
           <button id="btnFit" class="link" style="margin-left:auto">Ajustement: Contain</button>
         </h2>
         <div class="content">
@@ -347,7 +342,7 @@
         <h2>Contrôle de la voiture (HTTP)</h2>
         <div class="content">
           <div class="row" style="margin-bottom:10px">
-            <input id="httpBase" type="text" value="http://adresse_ESP32" aria-label="Base HTTP">
+            <input id="httpBase" type="text" value="http://192.168.1.168" aria-label="Base HTTP">
             <button id="btnTest" class="link">Test HTTP</button>
             <button id="btnStop" class="link danger">STOP</button>
           </div>
@@ -417,51 +412,57 @@
         <h2>Aide – Mise en route rapide</h2>
         <div class="content">
           <ol class="help-steps">
-            <li><strong>Connexion réseau :</strong> connectez votre téléphone/PC au réseau de l’ESP32 (<code>192.168.4.1</code> en AP ou votre LAN).</li>
+            <li><strong>Connexion réseau :</strong> connectez votre téléphone ou votre PC au même réseau que l’ESP32.</li>
             <li><strong>Configurer les URLs :</strong> dans l’onglet <em>Contrôles + Caméra</em>, renseignez :
               <ul>
-                <li><strong>Flux MJPEG</strong> → ex. <code>http://192.168.4.1:81/stream</code></li>
-                <li><strong>Base HTTP</strong> → ex. <code>http://192.168.4.1</code></li>
+                <li><strong>Flux MJPEG</strong> → par exemple <code>http://192.168.1.168:81/stream</code></li>
+                <li><strong>Base HTTP</strong> → par exemple <code>http://192.168.1.168</code></li>
               </ul>
             </li>
-            <li><strong>Tester la liaison :</strong> cliquez sur <em>Test HTTP</em>, puis vérifiez le statut (<em>HTTP OK</em>).</li>
+            <li><strong>Tester la liaison :</strong> cliquez sur <em>Test HTTP</em> pour vérifier que les commandes arrivent bien à l’ESP32.</li>
           </ol>
 
           <div class="help-grid" style="margin-top:12px">
             <article class="help-block">
               <h3>Commandes voiture</h3>
               <ul>
-                <li>Endpoint: <code>/cmd?c=A|R|G|D|S|C|0|1|2|3</code></li>
-                <li><span class="help-kbd">↑ / Z</span> Avancer</li>
-                <li><span class="help-kbd">↓ / S</span> Reculer</li>
-                <li><span class="help-kbd">← / Q</span> Gauche</li>
-                <li><span class="help-kbd">→ / D</span> Droite</li>
-                <li><span class="help-kbd">Espace</span> STOP moteur</li>
-                <li><span class="help-kbd">Relâche direction</span> Centre</li>
-                <li><span class="help-kbd">0</span> 25%</li>
-                <li><span class="help-kbd">1</span> 50%</li>
-                <li><span class="help-kbd">2</span> 75%</li>
-                <li><span class="help-kbd">3</span> 100%</li>
+                <li>Endpoint principal : <code>/cmd?c=A|R|G|D|S|C|0|1|2|3</code></li>
+                <li><span class="help-kbd">↑ / Z</span> : avancer</li>
+                <li><span class="help-kbd">↓ / S</span> : reculer</li>
+                <li><span class="help-kbd">← / Q</span> : tourner à gauche</li>
+                <li><span class="help-kbd">→ / D</span> : tourner à droite</li>
+                <li><span class="help-kbd">Espace</span> : STOP</li>
+                <li><span class="help-kbd">0 1 2 3</span> : réglage de la puissance moteur</li>
               </ul>
             </article>
 
             <article class="help-block">
-              <h3>Caméra & iPhone</h3>
+              <h3>Logique de conduite</h3>
               <ul>
-                <li>Utilisez l’onglet <em>Caméra seule</em> pour un affichage plein écran.</li>
-                <li>Appuyez sur <em>Plein écran</em> puis <em>Anti-veille</em> si disponible.</li>
-                <li>En cas d’écran noir : <em>Recharger</em> puis vérifier l’URL MJPEG.</li>
-                <li>En paysage, le champ de vision est plus confortable.</li>
+                <li>Il est possible de <strong>tourner et avancer en même temps</strong>.</li>
+                <li>Si on relâche <strong>avance/recul</strong>, le moteur s’arrête.</li>
+                <li>Si on relâche <strong>gauche/droite</strong>, les roues reviennent au centre.</li>
+                <li>Le bouton <strong>STOP</strong> arrête le moteur puis remet la direction au centre.</li>
               </ul>
             </article>
 
             <article class="help-block">
-              <h3>Dépannage rapide</h3>
+              <h3>Caméra</h3>
               <ul>
-                <li><strong>HTTP KO :</strong> vérifier la base HTTP et le Wi-Fi.</li>
-                <li><strong>Flux indisponible :</strong> vérifier le port <code>:81/stream</code>.</li>
-                <li><strong>Latence :</strong> réduire la distance Wi-Fi et fermer les applis en arrière-plan.</li>
-                <li><strong>Sécurité :</strong> tester d’abord roues levées, garder le STOP accessible.</li>
+                <li>L’onglet <em>Caméra seule</em> permet d’avoir uniquement le flux vidéo.</li>
+                <li>Le bouton <em>Plein écran</em> est pratique sur téléphone.</li>
+                <li>Le bouton <em>Anti-veille</em> peut éviter l’extinction automatique de l’écran selon le navigateur.</li>
+                <li>Si le flux se bloque, utilisez <em>Recharger</em>.</li>
+              </ul>
+            </article>
+
+            <article class="help-block">
+              <h3>Dépannage / sécurité</h3>
+              <ul>
+                <li>Si les commandes ne répondent pas, vérifier l’adresse IP de base HTTP.</li>
+                <li>Si la vidéo ne s’affiche pas, vérifier le port <code>:81/stream</code>.</li>
+                <li>Faire les premiers essais avec les roues levées ou dans un espace dégagé.</li>
+                <li>Garder le bouton <strong>STOP</strong> accessible pendant les tests.</li>
               </ul>
             </article>
           </div>
@@ -480,7 +481,7 @@
 
     const DEFAULTS={
       STREAM_URL:"http://192.168.1.29:81/stream",
-      HTTP_BASE:"http://192.168.1.250",
+      HTTP_BASE:"http://192.168.1.168",
       LOGO_URL:"iut_univ_blanc.png",
       TEAM_TXT:"Groupe 2 Voiture RC"
     };
@@ -541,6 +542,7 @@
     const tabFull=$("#tabFull"), tabCam=$("#tabCam"), tabHelp=$("#tabHelp");
     const viewFull=$("#view-full"), viewCam=$("#view-cam"), viewHelp=$("#view-help");
     let streamFullWrap=null, streamCamWrap=null;
+
     function setView(v){
       const isFull=v==="full", isCam=v==="cam", isHelp=v==="help";
       if(!isCam) exitFakeFullscreen(streamCamWrap);
@@ -550,11 +552,14 @@
       tabFull.classList.toggle("active", isFull);
       tabCam.classList.toggle("active", isCam);
       tabHelp.classList.toggle("active", isHelp);
-      const url=new URL(location.href); url.searchParams.set("view", v); history.replaceState(null,"",url);
+      const url=new URL(location.href);
+      url.searchParams.set("view", v);
+      history.replaceState(null,"",url);
     }
+
     setView(param("view","full"));
     tabFull.addEventListener("click", ()=>setView("full"));
-    tabCam .addEventListener("click", ()=>setView("cam"));
+    tabCam.addEventListener("click", ()=>setView("cam"));
     tabHelp.addEventListener("click", ()=>setView("help"));
 
     const imgFull=$("#imgFull"), imgCam=$("#imgCam");
@@ -566,29 +571,19 @@
     const retryFull=$("#retryFull"), retryCam=$("#retryCam");
     const btnDisconnectStream=$("#disconnectStream");
     const btnDisconnectStreamCam=$("#disconnectStreamCam");
-    const fpsBadge=$("#fpsBadge");
-    const FPS_WINDOW_MS = 4000;
-    const FPS_STALE_MS = 1600;
-    let _fpsFrameTimes=[];
-    let _fpsLastEventAt=0;
-    let _fpsUiTimer=null;
-    let _fpsStatsTimer=null;
-    let _fpsServerValue=null;
-    let _fpsServerAt=0;
 
     const streamDefault = param("stream", DEFAULTS.STREAM_URL);
-    resetFps();
-    startFpsLoop();
-    startFpsStatsPolling();
     setStream(streamDefault);
 
     function setStream(url){
-      resetFps();
-      imgFull.src=url; imgCam.src=url;
-      pollServerFpsOnce();
-      streamUrl.value=url; streamUrlCam.value=url;
-      clearStreamError(true); clearStreamError(false);
+      imgFull.src=url;
+      imgCam.src=url;
+      streamUrl.value=url;
+      streamUrlCam.value=url;
+      clearStreamError(true);
+      clearStreamError(false);
     }
+
     function reloadImg(img){
       try{
         if(!img || !img.src) return;
@@ -597,108 +592,28 @@
         img.src=u.toString();
       }catch{}
     }
+
     function showStreamError(full, message){
       const wrap = full ? streamFullWrap : streamCamWrap;
       wrap.classList.add("error");
       const alert = full ? $("#alertFull") : $("#alertCam");
       setAlertMessage(alert, message || "Flux vidéo indisponible.");
     }
+
     function clearStreamError(full){
       const wrap = full ? streamFullWrap : streamCamWrap;
       wrap.classList.remove("error");
     }
-    function trimFpsSamples(now){
-      while(_fpsFrameTimes.length && (now - _fpsFrameTimes[0]) > FPS_WINDOW_MS){
-        _fpsFrameTimes.shift();
-      }
-    }
 
-    function setFpsBadgeValue(label, level="warn"){
-      fpsBadge.textContent = label;
-      fpsBadge.className = "badge " + level;
-    }
+    imgFull.addEventListener("load", ()=>{ clearStreamError(true); });
+    imgCam.addEventListener("load", ()=>{ clearStreamError(false); });
 
-    function resetFps(){
-      _fpsFrameTimes=[];
-      _fpsLastEventAt=0;
-      _fpsServerValue=null;
-      _fpsServerAt=0;
-      setFpsBadgeValue("FPS --", "warn");
-    }
-
-    function registerFrameTick(){
-      const now = performance.now();
-      _fpsLastEventAt = now;
-      _fpsFrameTimes.push(now);
-      trimFpsSamples(now);
-    }
-
-    function getStatsEndpoint(){
-      try{
-        const streamSrc = (imgFull?.src || "").trim();
-        if(!streamSrc) return "";
-        const u = new URL(streamSrc, location.href);
-        if(!/^https?:$/i.test(u.protocol)) return "";
-        return `${u.origin}/stats`;
-      }catch{ return ""; }
-    }
-
-    async function pollServerFpsOnce(){
-      const endpoint = getStatsEndpoint();
-      if(!endpoint) return;
-      try{
-        const res = await fetch(endpoint, { cache:"no-store" });
-        if(!res.ok) return;
-        const data = await res.json();
-        if(Number.isFinite(data?.fps)){
-          _fpsServerValue = Math.max(0, Number(data.fps));
-          _fpsServerAt = performance.now();
-        }
-      }catch{}
-    }
-
-    function startFpsStatsPolling(){
-      if(_fpsStatsTimer) clearInterval(_fpsStatsTimer);
-      _fpsStatsTimer = setInterval(()=>pollServerFpsOnce(), 1000);
-      pollServerFpsOnce();
-    }
-
-    function refreshFpsBadge(){
-      const now = performance.now();
-      trimFpsSamples(now);
-
-      if(_fpsServerValue!=null && (now - _fpsServerAt) < FPS_STALE_MS){
-        const fps = _fpsServerValue;
-        const rounded = Math.max(0, Math.round(fps));
-        setFpsBadgeValue("FPS " + String(rounded).padStart(2,"0"), fps > 20 ? "ok" : fps > 10 ? "warn" : "err");
-        return;
-      }
-
-      if(_fpsFrameTimes.length < 2 || (now - _fpsLastEventAt) > FPS_STALE_MS){
-        setFpsBadgeValue("FPS --", _fpsLastEventAt ? "err" : "warn");
-        return;
-      }
-
-      const elapsedMs = _fpsFrameTimes[_fpsFrameTimes.length - 1] - _fpsFrameTimes[0];
-      const fps = elapsedMs > 0 ? ((_fpsFrameTimes.length - 1) * 1000 / elapsedMs) : 0;
-      const rounded = Math.max(0, Math.round(fps));
-      setFpsBadgeValue("FPS " + String(rounded).padStart(2,"0"), fps > 20 ? "ok" : fps > 10 ? "warn" : "err");
-    }
-
-    function startFpsLoop(){
-      if(_fpsUiTimer) clearInterval(_fpsUiTimer);
-      _fpsUiTimer = setInterval(refreshFpsBadge, 250);
-    }
-
-    imgFull.addEventListener("load", ()=>{ clearStreamError(true); registerFrameTick(); });
-    imgCam .addEventListener("load", ()=>{ clearStreamError(false); registerFrameTick(); });
     imgFull.addEventListener("error", ()=>{
-      resetFps();
       showStreamError(true, "Flux vidéo indisponible (URL invalide, caméra arrêtée ou réseau HS).");
       notify("Erreur flux vidéo (vue complète).", "err", [{id:"r",label:"Réessayer",onClick:()=>reloadImg(imgFull)}]);
     });
+
     imgCam.addEventListener("error", ()=>{
-      resetFps();
       showStreamError(false, "Flux vidéo indisponible (URL invalide, caméra arrêtée ou réseau HS).");
       notify("Erreur flux vidéo (vue caméra).", "err", [{id:"r",label:"Réessayer",onClick:()=>reloadImg(imgCam)}]);
     });
@@ -707,24 +622,27 @@
       const u=(streamUrl.value||"").trim();
       if(u) setStream(u); else notify("URL de flux vide.", "warn");
     });
+
     reloadStream.addEventListener("click", ()=>reloadImg(imgFull));
+
     applyStreamCam.addEventListener("click", ()=>{
       const u=(streamUrlCam.value||"").trim();
       if(u) setStream(u); else notify("URL de flux vide.", "warn");
     });
+
     reloadStreamCam.addEventListener("click", ()=>reloadImg(imgCam));
     retryFull.addEventListener("click", ()=>reloadImg(imgFull));
-    retryCam .addEventListener("click", ()=>reloadImg(imgCam));
+    retryCam.addEventListener("click", ()=>reloadImg(imgCam));
 
     function disconnectStream(img, full){
       try{ img.src=""; }catch{}
       const wrap  = full ? streamFullWrap : streamCamWrap;
       const alert = full ? $("#alertFull") : $("#alertCam");
       wrap.classList.add("error");
-      resetFps();
       setAlertMessage(alert, "Flux déconnecté par l’utilisateur.");
       notify("Flux vidéo déconnecté.", "warn");
     }
+
     btnDisconnectStream.addEventListener("click", ()=>disconnectStream(imgFull,true));
     btnDisconnectStreamCam.addEventListener("click", ()=>disconnectStream(imgCam,false));
 
@@ -743,17 +661,22 @@
 
     const btnWake=$("#btnWake");
     let wakeLock=null;
+
     async function enableWakeLock(fromBtn=false){
       try{
         if(!wakeLock){
           wakeLock = await navigator.wakeLock.request("screen");
           if(fromBtn) notify("Anti-veille activé (si supporté).", "ok");
-          wakeLock.addEventListener("release", ()=>{ wakeLock=null; notify("Anti-veille relâché.", "warn"); });
+          wakeLock.addEventListener("release", ()=>{
+            wakeLock=null;
+            notify("Anti-veille relâché.", "warn");
+          });
         }
       }catch{
         if(fromBtn) notify("Anti-veille non supporté par ce navigateur.", "warn");
       }
     }
+
     btnWake.addEventListener("click", ()=>enableWakeLock(true));
 
     const btnFS=$("#btnFS"), btnReload=$("#btnReload");
@@ -856,7 +779,7 @@
     async function sendOverHTTP(cmd, silent=false){
       const base=(httpBaseEl.value||"").trim().replace(/\/+$/,"");
       if(!/^https?:\/\//i.test(base)){
-        if(!silent) notify("Base HTTP invalide (ex: http://192.168.4.1)", "warn");
+        if(!silent) notify("Base HTTP invalide (ex: http://192.168.1.168)", "warn");
         setHttpState("err","Base HTTP invalide");
         return false;
       }
@@ -994,7 +917,9 @@
       if(!viewFull.classList.contains("active")) return;
 
       const id=(e.key||"").toLowerCase();
-      e.preventDefault(); if(pressed.has(id)) return; pressed.add(id);
+      e.preventDefault();
+      if(pressed.has(id)) return;
+      pressed.add(id);
 
       if(e.key==="ArrowUp") keyEls.ArrowUp.classList.add("on");
       if(e.key==="ArrowLeft") keyEls.ArrowLeft.classList.add("on");
@@ -1011,7 +936,8 @@
       if(!viewFull.classList.contains("active")) return;
 
       const id=(e.key||"").toLowerCase();
-      e.preventDefault(); pressed.delete(id);
+      e.preventDefault();
+      pressed.delete(id);
 
       if(e.key==="ArrowUp") keyEls.ArrowUp.classList.remove("on");
       if(e.key==="ArrowLeft") keyEls.ArrowLeft.classList.remove("on");
