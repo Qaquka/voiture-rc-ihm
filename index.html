@@ -464,7 +464,7 @@
             <div></div>
           </div>
         </div>
-        <div class="foot">Commandes HTTP : <code>/cmd?c=A|R|G|D|S|0|1|2|3</code>. Réglage puissance : <code>0=25%</code>, <code>1=50%</code>, <code>2=75%</code>, <code>3=100%</code>.</div>
+        <div class="foot">Commandes HTTP : <code>/cmd?c=A|R|G|D|S|C|0|1|2|3</code>. Réglage puissance : <code>0=25%</code>, <code>1=50%</code>, <code>2=75%</code>, <code>3=100%</code>.</div>
       </div>
     </section>
 
@@ -540,12 +540,13 @@
             <article class="help-block">
               <h3>Commandes voiture</h3>
               <ul>
-                <li>Endpoint: <code>/cmd?c=A|R|G|D|S|0|1|2|3</code></li>
+                <li>Endpoint: <code>/cmd?c=A|R|G|D|S|C|0|1|2|3</code></li>
                 <li><span class="help-kbd">↑ / Z</span> Avancer</li>
                 <li><span class="help-kbd">↓ / S</span> Reculer</li>
                 <li><span class="help-kbd">← / Q</span> Gauche</li>
                 <li><span class="help-kbd">→ / D</span> Droite</li>
-                <li><span class="help-kbd">Espace</span> STOP</li>
+                <li><span class="help-kbd">Espace</span> STOP moteur</li>
+                <li><span class="help-kbd">Relâche direction</span> Centre</li>
                 <li><span class="help-kbd">0</span> 25%</li>
                 <li><span class="help-kbd">1</span> 50%</li>
                 <li><span class="help-kbd">2</span> 75%</li>
@@ -1106,9 +1107,14 @@
     });
     setActiveSpeed("0");
 
-    $("#btnStop").addEventListener("click", ()=>sendCommand("S"));
+    $("#btnStop").addEventListener("click", async ()=>{
+      await sendCommand("S");
+      await sendCommand("C");
+    });
+
     $("#btnTest").addEventListener("click", async ()=>{
       await sendOverHTTP("S", true);
+      await sendOverHTTP("C", true);
       await pollTelemetryOnce();
       notify("Test HTTP terminé.", "ok");
     });
@@ -1174,6 +1180,7 @@
       const a=document.activeElement;
       return a && (a.tagName==="INPUT" || a.tagName==="TEXTAREA");
     }
+
     function keyToCmd(evt){
       const k=(evt.key||"").toLowerCase();
       if(k==="arrowup" || k==="z") return "A";
@@ -1187,15 +1194,34 @@
       if(k==="3") return "3";
       return null;
     }
+
     function sendDirFromKey(evt, down){
       const cmd=keyToCmd(evt); if(!cmd) return;
+
       if(["0","1","2","3"].includes(cmd)){
         if(down) sendSpeed(cmd);
         return;
       }
-      if(cmd==="S"){ sendCommand("S"); return; }
-      if(down) sendCommand(cmd);
-      else sendCommand("S");
+
+      if(down){
+        sendCommand(cmd);
+        return;
+      }
+
+      if(cmd==="A" || cmd==="R"){
+        sendCommand("S");
+        return;
+      }
+
+      if(cmd==="G" || cmd==="D"){
+        sendCommand("C");
+        return;
+      }
+
+      if(cmd==="S"){
+        sendCommand("S");
+        sendCommand("C");
+      }
     }
 
     window.addEventListener("keydown",(e)=>{
@@ -1233,18 +1259,47 @@
       sendDirFromKey(e,false);
     },{passive:false});
 
-    window.addEventListener("blur", ()=>sendCommand("S"));
-    document.addEventListener("visibilitychange", ()=>{ if(document.hidden) sendCommand("S"); });
+    window.addEventListener("blur", async ()=>{
+      await sendCommand("S");
+      await sendCommand("C");
+    });
+
+    document.addEventListener("visibilitychange", async ()=>{
+      if(document.hidden){
+        await sendCommand("S");
+        await sendCommand("C");
+      }
+    });
 
     $$(".controls .btn").forEach((btn)=>{
       const dir=btn.getAttribute("data-dir");
-      const cmd = dir==="forward"?"A":dir==="backward"?"R":dir==="left"?"G":dir==="right"?"D":"S";
+      const cmd =
+        dir==="forward"  ? "A" :
+        dir==="backward" ? "R" :
+        dir==="left"     ? "G" :
+        dir==="right"    ? "D" :
+        "S";
+
       let activePointer=null;
 
-      const press=()=>{ btn.classList.add("down"); sendCommand(cmd); };
-      const release=(sendStop=true)=>{
+      const press=()=>{
+        btn.classList.add("down");
+        sendCommand(cmd);
+      };
+
+      const release=()=>{
         btn.classList.remove("down");
-        if(sendStop) sendCommand("S");
+
+        if (dir === "forward" || dir === "backward") {
+          sendCommand("S");
+        }
+        else if (dir === "left" || dir === "right") {
+          sendCommand("C");
+        }
+        else if (dir === "stop") {
+          sendCommand("S");
+          sendCommand("C");
+        }
       };
 
       btn.addEventListener("pointerdown", (event)=>{
@@ -1253,22 +1308,26 @@
         btn.setPointerCapture?.(event.pointerId);
         press();
       });
+
       btn.addEventListener("pointerup", (event)=>{
         if(activePointer !== event.pointerId) return;
         activePointer = null;
-        release(true);
+        release();
       });
+
       btn.addEventListener("pointercancel", (event)=>{
         if(activePointer !== event.pointerId) return;
         activePointer = null;
-        release(true);
+        release();
       });
+
       btn.addEventListener("lostpointercapture", ()=>{
         if(activePointer !== null){
           activePointer = null;
-          release(true);
+          release();
         }
       });
+
       btn.addEventListener("contextmenu", (event)=>event.preventDefault());
     });
 
