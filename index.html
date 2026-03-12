@@ -129,12 +129,6 @@
       height:100% !important;
       object-fit:contain !important;
     }
-    .stream.fs .hud{
-      padding-top:calc(10px + env(safe-area-inset-top));
-      padding-bottom:calc(14px + env(safe-area-inset-bottom));
-      padding-left:calc(18px + env(safe-area-inset-left));
-      padding-right:calc(18px + env(safe-area-inset-right));
-    }
 
     .meta{ display:flex; gap:12px; flex-wrap:wrap; color:var(--muted); font-size:.92rem; }
     .tag{ padding:4px 8px; border:1px solid rgba(255,255,255,.08); border-radius:999px; }
@@ -230,61 +224,6 @@
       padding: 6px 10px; border-radius: 8px; cursor: pointer;
     }
 
-    .hud{
-      position:absolute; bottom:0; left:0; right:0;
-      background:linear-gradient(180deg, rgba(15,23,42,.18), rgba(2,6,23,.78));
-      border-top:1px solid rgba(255,255,255,.14);
-      backdrop-filter: blur(4px);
-      color:#fff;
-      padding:12px 16px;
-      font-weight:700;
-      z-index:3;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-    }
-    .hud-left{ min-width:1px; }
-    .hud-right{ margin-left:auto; display:flex; align-items:center; }
-
-    .hud-center{
-      position:absolute;
-      left:50%;
-      transform:translateX(-50%);
-      display:flex;
-      align-items:baseline;
-      justify-content:center;
-      pointer-events:none;
-    }
-
-    .speedBig{
-      display:flex; align-items:baseline; gap:12px;
-      font-size:3.4rem;
-      line-height:1; letter-spacing:1px;
-      text-shadow:0 2px 6px rgba(0,0,0,.6);
-      min-width:180px;
-      justify-content:center;
-    }
-    .speedBig .num{ font-size:3.6rem; font-variant-numeric: tabular-nums; }
-    .speedBig .unit{ font-size:1.05rem; opacity:.92; margin-bottom:6px; }
-
-    .batt{ display:flex; align-items:center; gap:8px; }
-    .batt-pack{
-      display:grid; grid-auto-flow:column; gap:3px; padding:2px 5px; border-radius:7px;
-      border:1px solid rgba(255,255,255,.45);
-    }
-    .cell{
-      width:12px;
-      height:18px;
-      background:#334155;
-      border-radius:3px;
-      transition:background .2s ease;
-    }
-    .cell.on{ background:#22c55e; }
-    .cell.mid{ background:#f59e0b; }
-    .cell.low{ background:#ef4444; }
-    .blink{ animation: blink 1s infinite; }
-    @keyframes blink { 0%,60%{opacity:1} 61%,100%{opacity:.2} }
-
     .http-badge{
       padding:3px 8px; border-radius:999px;
       border:1px solid rgba(255,255,255,.18);
@@ -317,8 +256,6 @@
       main{ max-width:100%; padding:0 10px; margin:10px auto 14px; }
       .card .content{ padding:12px; }
       .btn{ padding:16px 14px; font-size:1.05rem; }
-      .speedBig{ font-size:3.0rem; }
-      .speedBig .num{ font-size:3.2rem; }
     }
     @media (max-width: 640px){
       header{ padding:8px 10px; }
@@ -333,10 +270,6 @@
       #view-full .stream{ aspect-ratio:auto; height: calc((var(--vh, 1vh) * 100) - 280px); min-height:260px; }
       #view-cam .stream{ height: calc((var(--vh, 1vh) * 100) - 200px); min-height:280px; }
 
-      .hud{ padding:10px 12px; }
-      .speedBig{ font-size:2.6rem; }
-      .speedBig .num{ font-size:2.8rem; }
-      .cell{ width:11px; height:17px; }
       .speed-label{ width:100%; min-width:auto; }
     }
 
@@ -386,27 +319,6 @@
           </div>
 
           <div class="stream" id="streamFullWrap">
-            <div class="hud" id="hudFull" aria-live="polite">
-              <div class="hud-left"></div>
-
-              <div class="hud-center">
-                <div class="speedBig" aria-label="Vitesse actuelle">
-                  <span class="num" id="speedValBig">0</span>
-                  <span class="unit">KM/H</span>
-                </div>
-              </div>
-
-              <div class="hud-right">
-                <div class="batt" aria-label="Batterie">
-                  <span class="label">Batt.</span>
-                  <div class="batt-pack" id="battPack" aria-hidden="true">
-                    <span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span>
-                  </div>
-                  <span class="val" id="battVal">--</span><span class="unit">%</span>
-                </div>
-              </div>
-            </div>
-
             <img id="imgFull" src="http://adresse_ESP32:81/stream" decoding="async" alt="Flux caméra ESP32 (MJPEG)">
             <div class="alert" id="alertFull">
               Flux vidéo indisponible. Vérifiez l’URL, le réseau, ou redémarrez la caméra.
@@ -482,27 +394,6 @@
           </div>
 
           <div class="stream" id="streamCamWrap" style="margin-top:10px">
-            <div class="hud" id="hudCam" aria-live="polite">
-              <div class="hud-left"></div>
-
-              <div class="hud-center">
-                <div style="display:flex;align-items:baseline;gap:6px;font-weight:900;">
-                  <span id="speedValCam" style="font-size:2.2rem;line-height:1;font-variant-numeric:tabular-nums">0.0</span>
-                  <span class="unit">km/h</span>
-                </div>
-              </div>
-
-              <div class="hud-right">
-                <div class="batt">
-                  <span class="label">Batt.</span>
-                  <div class="batt-pack" id="battPackCam" aria-hidden="true">
-                    <span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span>
-                  </div>
-                  <span class="val" id="battValCam">--</span><span class="unit">%</span>
-                </div>
-              </div>
-            </div>
-
             <img id="imgCam" src="http://adresse_ESP32:81/stream" decoding="async" alt="Flux caméra ESP32 (MJPEG)">
             <div class="alert" id="alertCam">
               Flux vidéo indisponible. Vérifiez l’URL, le réseau, ou redémarrez la caméra.
@@ -573,15 +464,6 @@
                 <li><strong>Sécurité :</strong> tester d’abord roues levées, garder le STOP accessible.</li>
               </ul>
             </article>
-
-            <article class="help-block">
-              <h3>Télémétrie (optionnelle)</h3>
-              <ul>
-                <li>JSON: <code>/telemetry</code> (speed + battery)</li>
-                <li>Fallback: <code>/speed</code> et <code>/battery</code></li>
-                <li>Le polling est HTTP uniquement (pas de WebSocket/MQTT).</li>
-              </ul>
-            </article>
           </div>
         </div>
       </div>
@@ -597,18 +479,10 @@
     const qp=new URLSearchParams(location.search);
 
     const DEFAULTS={
-      STREAM_URL:"http://192.168.1.29/stream",
+      STREAM_URL:"http://192.168.1.29:81/stream",
       HTTP_BASE:"http://192.168.1.250",
       LOGO_URL:"iut_univ_blanc.png",
       TEAM_TXT:"Groupe 2 Voiture RC"
-    };
-
-    const TELEMETRY = {
-      slowMs: 1200,
-      fastMs: 450,
-      endpointJson: "/telemetry",
-      endpointSpeed: "/speed",
-      endpointBattery: "/battery"
     };
 
     const COMMAND = {
@@ -955,11 +829,6 @@
 
     window.addEventListener("pagehide", ()=>exitFakeFullscreen(streamCamWrap));
 
-    const speedValBig=$("#speedValBig");
-    const speedValCam=$("#speedValCam");
-    const battVal=$("#battVal"), battValCam=$("#battValCam");
-    const battPack=$("#battPack"), battPackCam=$("#battPackCam");
-
     const httpDot=$("#httpDot"), httpStatus=$("#httpStatus"), httpBadge=$("#httpBadge");
     const httpBaseEl=$("#httpBase");
     const speedButtons = $$(".speed-btn");
@@ -982,54 +851,6 @@
       speedButtons.forEach((btn)=>{
         btn.classList.toggle("active", btn.dataset.speed === selectedSpeed);
       });
-    }
-
-    function clamp(n,min,max){ return Math.max(min, Math.min(max,n)); }
-
-    let _speedDisp=0;
-    function setSpeedDisplay(v){
-      const n=clamp(v,0,999);
-      _speedDisp=n;
-      speedValBig.textContent = String(Math.round(n));
-      speedValCam.textContent = n.toFixed(1);
-    }
-    function updateSpeed(v){
-      const target = Number.isFinite(v) ? v : 0;
-      const frames=5;
-      let i=0; const start=_speedDisp; const delta=target-start;
-      (function step(){
-        i++; setSpeedDisplay(start + delta*(i/frames));
-        if(i<frames) requestAnimationFrame(step);
-      })();
-    }
-
-    function setCells(pack, pct){
-      if(!pack) return;
-      const cells=Array.from(pack.querySelectorAll(".cell"));
-      const lit=Math.round((pct/100)*cells.length);
-      const ratio=pct/100;
-      cells.forEach((c,idx)=>{
-        c.className="cell";
-        if(idx<lit){
-          if(ratio<0.2) c.classList.add("low");
-          else if(ratio<0.5) c.classList.add("mid");
-          else c.classList.add("on");
-        }
-      });
-      if(pct<10){
-        pack.classList.add("blink");
-        cells.forEach((c,idx)=>{ c.style.background = idx<lit ? "#ef4444" : "#1e293b"; });
-      }else{
-        pack.classList.remove("blink");
-        cells.forEach(c=>c.style.background="");
-      }
-    }
-    function updateBattery(pct){
-      if(!Number.isFinite(pct)) return;
-      const n=clamp(pct,0,100);
-      battVal.textContent=String(Math.round(n));
-      battValCam.textContent=String(Math.round(n));
-      setCells(battPack,n); setCells(battPackCam,n);
     }
 
     async function sendOverHTTP(cmd, silent=false){
@@ -1073,7 +894,6 @@
     }
 
     async function sendCommand(cmd){
-      setTelemetryMode(cmd!=="S");
       if(shouldSkipCommand(cmd)) return;
 
       if(cmdInFlight){
@@ -1098,7 +918,6 @@
       if(ok){
         setActiveSpeed(lvl);
         notify(`Puissance réglée sur ${lvl==="0"?"25":lvl==="1"?"50":lvl==="2"?"75":"100"}%`, "ok");
-        await pollTelemetryOnce();
       }
     }
 
@@ -1115,63 +934,8 @@
     $("#btnTest").addEventListener("click", async ()=>{
       await sendOverHTTP("S", true);
       await sendOverHTTP("C", true);
-      await pollTelemetryOnce();
       notify("Test HTTP terminé.", "ok");
     });
-
-    async function pollTelemetryOnce(){
-      const base=(httpBaseEl.value||"").trim().replace(/\/+$/,"");
-      if(!/^https?:\/\//i.test(base)) return;
-
-      try{
-        const r = await fetch(base + TELEMETRY.endpointJson, { cache:"no-store" });
-        if(r.ok){
-          const j = await r.json();
-          if(Number.isFinite(j.speed)) updateSpeed(j.speed);
-          if(Number.isFinite(j.battery)) updateBattery(j.battery);
-          return;
-        }
-      }catch{}
-
-      try{
-        const rs = await fetch(base + TELEMETRY.endpointSpeed, { cache:"no-store" });
-        if(rs.ok){
-          const t = parseFloat((await rs.text()).trim());
-          if(Number.isFinite(t)) updateSpeed(t);
-        }
-      }catch{}
-      try{
-        const rb = await fetch(base + TELEMETRY.endpointBattery, { cache:"no-store" });
-        if(rb.ok){
-          const t = parseFloat((await rb.text()).trim());
-          if(Number.isFinite(t)) updateBattery(t);
-        }
-      }catch{}
-    }
-
-    let telemTimer=null;
-    let telemIntervalMs=TELEMETRY.slowMs;
-
-    function restartTelemetryTimer(){
-      if(telemTimer) clearInterval(telemTimer);
-      if(DEMO) return;
-      telemTimer = setInterval(()=>pollTelemetryOnce(), telemIntervalMs);
-    }
-
-    function setTelemetryMode(isMoving){
-      const targetMs = isMoving ? TELEMETRY.fastMs : TELEMETRY.slowMs;
-      if(targetMs===telemIntervalMs) return;
-      telemIntervalMs=targetMs;
-      restartTelemetryTimer();
-    }
-
-    function startTelemetry(){
-      setTelemetryMode(false);
-      if(DEMO) return;
-      restartTelemetryTimer();
-      pollTelemetryOnce();
-    }
-    httpBaseEl.addEventListener("change", startTelemetry);
 
     const keyEls={ArrowUp:$("#kUp"), ArrowLeft:$("#kLeft"), ArrowDown:$("#kDown"), ArrowRight:$("#kRight"), Space:$("#kSpace")};
     const pressed=new Set();
@@ -1335,15 +1099,9 @@
 
     if(DEMO){
       setHttpState("ok","DEMO");
-      notify("Mode démo actif : données simulées.", "ok");
-      setInterval(()=>{
-        const t=performance.now()/1000;
-        updateSpeed( 12 + 10*Math.sin(t*1.2) + 2*Math.cos(t*0.4) );
-        updateBattery( 50 + 50*Math.sin(t*0.05) );
-      }, 300);
+      notify("Mode démo actif.", "ok");
     }else{
       setHttpState("warn","Renseigne la base HTTP");
-      startTelemetry();
     }
   })();
   </script>
