@@ -17,23 +17,25 @@ Le système repose sur :
 ## Architecture
 
 ```text
-Navigateur Web
-      │
-      │ HTTP
-      ▼
-    ESP32
- (commande voiture)
-      │
-      ├── moteur DC
-      └── servomoteur
+Navigateur Web            Manette (ESP32)
+      │                        │
+      │ HTTP                   │ TCP
+      └───────────────┬────────┘
+                      │
+                      ▼
+                    ESP32
+              (commande voiture)
+                      │
+                      ├── moteur DC
+                      └── servomoteur
 
 ESP32-CAM
       │
       ▼
-  flux MJPEG
+   flux MJPEG
       │
       ▼
-interface web
+ interface web
 ```
 
 ## Fonctionnalités
