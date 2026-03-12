@@ -314,7 +314,7 @@
           </div>
 
           <div class="stream" id="streamFullWrap">
-            <img id="imgFull" src="http://adresse_ESP32:81/stream" decoding="async" alt="Flux caméra ESP32 (MJPEG)">
+            <img id="imgFull" src="http://192.168.1.29/stream" decoding="async" alt="Flux caméra ESP32 (MJPEG)">
             <div class="alert" id="alertFull">
               Flux vidéo indisponible. Vérifiez l’URL, le réseau, ou redémarrez la caméra.
               <button id="retryFull" class="link" style="margin-left:8px">Réessayer</button>
@@ -322,7 +322,7 @@
           </div>
 
           <div class="row" style="margin-top:10px">
-            <input id="streamUrl" type="text" value="http://adresse_ESP32:81/stream" aria-label="URL flux MJPEG">
+            <input id="streamUrl" type="text" value="http://192.168.1.29/stream" aria-label="URL flux MJPEG">
             <button id="applyStream" class="link primary">Appliquer</button>
             <button id="reloadStream" class="link">Recharger</button>
             <button id="disconnectStream" class="link danger">Déconnecter le flux</button>
@@ -335,7 +335,7 @@
             <span class="tag">Maintenir = mouvement continu</span>
           </div>
         </div>
-        <div class="foot">Si le flux ne s'affiche pas, vérifiez l'URL MJPEG (ex. <code>http://192.168.4.1:81/stream</code>).</div>
+        <div class="foot">Si le flux ne s'affiche pas, vérifiez l'URL MJPEG (ex. <code>http://192.168.1.29/stream</code>).</div>
       </div>
 
       <div class="card" style="margin-top:14px">
@@ -389,7 +389,7 @@
           </div>
 
           <div class="stream" id="streamCamWrap" style="margin-top:10px">
-            <img id="imgCam" src="http://adresse_ESP32:81/stream" decoding="async" alt="Flux caméra ESP32 (MJPEG)">
+            <img id="imgCam" src="http://192.168.1.29/stream" decoding="async" alt="Flux caméra ESP32 (MJPEG)">
             <div class="alert" id="alertCam">
               Flux vidéo indisponible. Vérifiez l’URL, le réseau, ou redémarrez la caméra.
               <button id="retryCam" class="link" style="margin-left:8px">Réessayer</button>
@@ -397,7 +397,7 @@
           </div>
 
           <div class="row" style="margin-top:10px">
-            <input id="streamUrlCam" type="text" value="http://adresse_ESP32:81/stream" aria-label="URL flux MJPEG (caméra seule)">
+            <input id="streamUrlCam" type="text" value="http://192.168.1.29/stream" aria-label="URL flux MJPEG (caméra seule)">
             <button id="applyStreamCam" class="link primary">Appliquer</button>
             <button id="reloadStreamCam" class="link">Recharger</button>
             <button id="disconnectStreamCam" class="link danger">Déconnecter le flux</button>
@@ -415,7 +415,7 @@
             <li><strong>Connexion réseau :</strong> connectez votre téléphone ou votre PC au même réseau que l’ESP32.</li>
             <li><strong>Configurer les URLs :</strong> dans l’onglet <em>Contrôles + Caméra</em>, renseignez :
               <ul>
-                <li><strong>Flux MJPEG</strong> → par exemple <code>http://192.168.1.168:81/stream</code></li>
+                <li><strong>Flux MJPEG</strong> → par exemple <code>http://192.168.1.29/stream</code></li>
                 <li><strong>Base HTTP</strong> → par exemple <code>http://192.168.1.168</code></li>
               </ul>
             </li>
@@ -460,7 +460,7 @@
               <h3>Dépannage / sécurité</h3>
               <ul>
                 <li>Si les commandes ne répondent pas, vérifier l’adresse IP de base HTTP.</li>
-                <li>Si la vidéo ne s’affiche pas, vérifier le port <code>:81/stream</code>.</li>
+                <li>Si la vidéo ne s’affiche pas, vérifier l’URL du flux caméra.</li>
                 <li>Faire les premiers essais avec les roues levées ou dans un espace dégagé.</li>
                 <li>Garder le bouton <strong>STOP</strong> accessible pendant les tests.</li>
               </ul>
@@ -480,7 +480,7 @@
     const qp=new URLSearchParams(location.search);
 
     const DEFAULTS={
-      STREAM_URL:"http://192.168.1.29:81/stream",
+      STREAM_URL:"http://192.168.1.29/stream",
       HTTP_BASE:"http://192.168.1.168",
       LOGO_URL:"iut_univ_blanc.png",
       TEAM_TXT:"Groupe 2 Voiture RC"
