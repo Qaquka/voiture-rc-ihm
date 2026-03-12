@@ -1,5 +1,9 @@
 # Voiture RC ESP32 + ESP32-CAM (BUT3 GEII)
 
+![PlatformIO](https://img.shields.io/badge/PlatformIO-ESP32-orange)
+![ESP32](https://img.shields.io/badge/ESP32-IoT-blue)
+![Project](https://img.shields.io/badge/BUT3-GEII-green)
+
 ## Présentation du projet
 
 Ce dépôt contient une interface de pilotage pour une voiture RC réalisée dans le cadre d’un projet BUT3 GEII.
@@ -9,6 +13,28 @@ Le système repose sur :
 - un **ESP32** pour la commande de la voiture (moteur + direction) via HTTP ;
 - un **ESP32-CAM** pour le flux vidéo MJPEG ;
 - une **IHM web** (HTML/CSS/JavaScript) pour piloter et visualiser la caméra.
+
+## Architecture
+
+```text
+Navigateur Web
+      │
+      │ HTTP
+      ▼
+    ESP32
+ (commande voiture)
+      │
+      ├── moteur DC
+      └── servomoteur
+
+ESP32-CAM
+      │
+      ▼
+  flux MJPEG
+      │
+      ▼
+interface web
+```
 
 ## Fonctionnalités
 
@@ -121,6 +147,13 @@ Les commandes utilisées par l’ESP32 sont :
 - `/cmd?c=S` → stop moteur
 - `/cmd?c=C` → centre direction
 - `/cmd?c=0` à `/cmd?c=3` → niveau de vitesse
+
+Niveaux de vitesse :
+
+- `0` = 25 %
+- `1` = 50 %
+- `2` = 75 %
+- `3` = 100 %
 
 ## Contrôles clavier
 
