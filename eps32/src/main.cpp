@@ -1,136 +1,298 @@
-#include <Arduino.h>
 #include <WiFi.h>
 #include <WebServer.h>
+#include <ESP32Servo.h>
 #include <ctype.h>
 
-#if __has_include("secrets.h")
-#include "secrets.h"
-#endif
+#define SERVER_PORT 4080
 
-#ifndef WIFI_SSID
-#define WIFI_SSID "WIFI-0C06-GEII"
-#endif
+// ===============================
+// PORTS MOTEUR
+// ===============================
+const int IN1 = 18;
+const int IN2 = 23;
+const int PWM = 19;
 
-#ifndef WIFI_PASSWORD
-#define WIFI_PASSWORD "iutgeiiiutgeii"
-#endif
+// ===============================
+// SERVO
+// ===============================
+Servo servoDirection;
+const int PIN_SERVO = 5;
 
-#define LED_PIN 2   // LED intégrée (ESP32 DevKit)
+const int ANGLE_GAUCHE = 60;
+const int ANGLE_CENTRE = 94;
+const int ANGLE_DROITE = 120;
 
-// ========= PARAMÈTRES Wi-Fi =========
-// ========= SERVEUR HTTP =========
-WebServer server(80);
+// ===============================
+// VARIABLES
+// ===============================
+int P = 25;
+char currentSpeedLevel = '0';
 
-bool isValidCommand(char cmd) {
-  return cmd=='F' || cmd=='B' || cmd=='L' || cmd=='R' || cmd=='S';
-}
+char motorState = 'S';      // A / R / S
+char directionState = 'C';  // G / D / C
 
-// Traite la commande reçue (F/B/L/R/S)
-void handleCommand(char cmd) {
-  switch (cmd) {
-    case 'F': Serial.println("CMD: FORWARD (F)"); break;
-    case 'B': Serial.println("CMD: BACKWARD (B)"); break;
-    case 'L': Serial.println("CMD: LEFT (L)"); break;
-    case 'R': Serial.println("CMD: RIGHT (R)"); break;
-    case 'S': Serial.println("CMD: STOP (S)"); break;
-    default:  Serial.printf("CMD: inconnu (%c)\n", cmd); break;
+// ===============================
+// WIFI
+// ===============================
+const char* ssid = "WIFI-0C06-GEII";
+const char* password = "iutgeiiiutgeii";
+
+WiFiServer TCPserver(SERVER_PORT);
+WiFiClient client;
+WebServer HTTPserver(80);
+
+// ===============================
+// VITESSE
+// ===============================
+void set_speed(char level) {
+  currentSpeedLevel = level;
+
+  switch (level) {
+    case '0': P = 25; break;
+    case '1': P = 40; break;
+    case '2': P = 55; break;
+    case '3': P = 75; break;
+    default:  P = 25; break;
   }
 
-  // Exemple : LED ON avancer, OFF au STOP
-  if (cmd == 'F') {
-    digitalWrite(LED_PIN, HIGH);
-  } else if (cmd == 'S') {
-    digitalWrite(LED_PIN, LOW);
+  Serial.print("Vitesse niveau ");
+  Serial.print(level);
+  Serial.print(" -> PWM = ");
+  Serial.println(P);
+}
+
+// ===============================
+// APPLICATION MOTEUR
+// ===============================
+void applyMotor() {
+  if (motorState == 'A') {
+    digitalWrite(IN1, HIGH);
+    digitalWrite(IN2, LOW);
+    analogWrite(PWM, P);
+    Serial.println("Moteur -> AVANT");
+  }
+  else if (motorState == 'R') {
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, HIGH);
+    analogWrite(PWM, P);
+    Serial.println("Moteur -> ARRIERE");
+  }
+  else {
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, LOW);
+    analogWrite(PWM, 0);
+    Serial.println("Moteur -> STOP");
   }
 }
 
-// Handler /cmd?c=F|B|L|R|S
-void handleCmd() {
-  String c = server.hasArg("c") ? server.arg("c") : "";
-  Serial.print("Commande recue: ");
+// ===============================
+// APPLICATION DIRECTION
+// ===============================
+void applyDirection() {
+  if (directionState == 'G') {
+    servoDirection.write(ANGLE_GAUCHE);
+    Serial.println("Direction -> GAUCHE");
+  }
+  else if (directionState == 'D') {
+    servoDirection.write(ANGLE_DROITE);
+    Serial.println("Direction -> DROITE");
+  }
+  else {
+    servoDirection.write(ANGLE_CENTRE);
+    Serial.println("Direction -> CENTRE");
+  }
+}
+
+// ===============================
+// COMMANDE
+// ===============================
+void command_motor(char c) {
+  c = toupper((unsigned char)c);
+
+  Serial.print("Commande recue : ");
   Serial.println(c);
 
-  // --- CORS pour l’IHM ---
-  server.sendHeader("Access-Control-Allow-Origin", "*");
-  server.sendHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-  server.sendHeader("Access-Control-Allow-Headers", "Content-Type");
-
-  if (c.length() != 1) {
-    server.send(400, "text/plain", "ERR: missing/invalid cmd");
+  // vitesses
+  if (c >= '0' && c <= '3') {
+    set_speed(c);
+    applyMotor();
     return;
   }
 
-  char cmd = toupper(c[0]);
-  if (!isValidCommand(cmd)) {
-    server.send(400, "text/plain", "ERR: unknown cmd");
+  // moteur
+  if (c == 'A') {
+    motorState = 'A';
+    applyMotor();
     return;
   }
 
-  handleCommand(cmd);
-  server.send(200, "text/plain", "OK");
+  if (c == 'R') {
+    motorState = 'R';
+    applyMotor();
+    return;
+  }
+
+  if (c == 'S') {
+    motorState = 'S';
+    applyMotor();
+    return;
+  }
+
+  // direction
+  if (c == 'G') {
+    directionState = 'G';
+    applyDirection();
+    return;
+  }
+
+  if (c == 'D') {
+    directionState = 'D';
+    applyDirection();
+    return;
+  }
+
+  if (c == 'C') {
+    directionState = 'C';
+    applyDirection();
+    return;
+  }
+
+  Serial.println("Commande inconnue");
 }
 
-// OPTIONS /cmd (pré-flight éventuel)
-void handleCmdOptions() {
-  server.sendHeader("Access-Control-Allow-Origin", "*");
-  server.sendHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-  server.sendHeader("Access-Control-Allow-Headers", "Content-Type");
-  server.send(204);  // No Content
-}
+// ===============================
+// TCP MANETTE
+// ===============================
+void Clientconnecte(WiFiServer &server, WiFiClient &client) {
+  static unsigned long lastPrint = 0;
 
-// Page d’info basique
-void handleRoot() {
-  String msg;
-  msg  = "ESP32-RC connecte au Wi-Fi.\n";
-  msg += "IP : " + WiFi.localIP().toString() + "\n";
-  msg += "Utiliser /cmd?c=F|B|L|R|S depuis l'IHM.\n";
+  if (!client || !client.connected()) {
+    WiFiClient newClient = server.available();
 
-  server.sendHeader("Access-Control-Allow-Origin", "*");
-  server.send(200, "text/plain", msg);
-}
-
-void setup() {
-  Serial.begin(115200);
-  delay(1000);
-
-  pinMode(LED_PIN, OUTPUT);
-  digitalWrite(LED_PIN, LOW);
-
-  Serial.println("\n[ESP32] Demarrage…");
-  Serial.printf("Connexion au Wi-Fi \"%s\"…\n", WIFI_SSID);
-
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-
-  // Attente de la connexion
-  int tries = 0;
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-    if (++tries > 60) {   // ~30 s
-      Serial.println("\nEchec connexion Wi-Fi !");
-      break;
+    if (newClient) {
+      client = newClient;
+      Serial.print("Client connecté: ");
+      Serial.println(client.remoteIP());
+    } else {
+      if (millis() - lastPrint >= 3000) {
+        Serial.println("En attente d'un client TCP...");
+        lastPrint = millis();
+      }
     }
   }
-
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("\n[WiFi] Connecte !");
-    Serial.print("Adresse IP : ");
-    Serial.println(WiFi.localIP());
-  } else {
-    Serial.println("[WiFi] NON connecte, mais on lance quand meme le serveur.");
-  }
-
-  // Routes HTTP
-  server.on("/", HTTP_GET, handleRoot);
-  server.on("/cmd", HTTP_GET, handleCmd);
-  server.on("/cmd", HTTP_OPTIONS, handleCmdOptions);
-
-  server.begin();
-  Serial.println("[HTTP] Serveur demarre sur le port 80");
 }
 
+// ===============================
+// HTTP
+// ===============================
+void addCORS() {
+  HTTPserver.sendHeader("Access-Control-Allow-Origin", "*");
+  HTTPserver.sendHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  HTTPserver.sendHeader("Access-Control-Allow-Headers", "Content-Type");
+}
+
+void handleOptions() {
+  addCORS();
+  HTTPserver.send(204, "text/plain", "");
+}
+
+void handleRoot() {
+  addCORS();
+
+  String msg = "";
+  msg += "ESP32 voiture RC OK\n";
+  msg += "IP : " + WiFi.localIP().toString() + "\n";
+  msg += "Commandes : /cmd?c=A|R|G|D|S|C|0|1|2|3\n";
+  msg += "A = avancer\n";
+  msg += "R = reculer\n";
+  msg += "G = gauche\n";
+  msg += "D = droite\n";
+  msg += "S = stop moteur\n";
+  msg += "C = centre direction\n";
+
+  HTTPserver.send(200, "text/plain", msg);
+}
+
+void handleCmd() {
+  addCORS();
+
+  if (!HTTPserver.hasArg("c")) {
+    HTTPserver.send(400, "text/plain", "ERR");
+    return;
+  }
+
+  String cmdStr = HTTPserver.arg("c");
+  if (cmdStr.length() != 1) {
+    HTTPserver.send(400, "text/plain", "ERR");
+    return;
+  }
+
+  char c = cmdStr.charAt(0);
+  command_motor(c);
+
+  HTTPserver.send(200, "text/plain", "OK");
+}
+
+// ===============================
+// SETUP HTTP
+// ===============================
+void setupHTTPServer() {
+  HTTPserver.on("/", HTTP_GET, handleRoot);
+  HTTPserver.on("/cmd", HTTP_GET, handleCmd);
+  HTTPserver.on("/cmd", HTTP_OPTIONS, handleOptions);
+
+  HTTPserver.begin();
+  Serial.println("HTTP OK");
+}
+
+// ===============================
+// SETUP
+// ===============================
+void setup() {
+  Serial.begin(9600);
+
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(PWM, OUTPUT);
+
+  servoDirection.setPeriodHertz(50);
+  servoDirection.attach(PIN_SERVO, 750, 2250);
+  servoDirection.write(ANGLE_CENTRE);
+
+  WiFi.begin(ssid, password);
+
+  Serial.println("Connexion WiFi...");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.print(".");
+  }
+
+  Serial.println();
+  Serial.println("WiFi OK");
+  Serial.print("IP : ");
+  Serial.println(WiFi.localIP());
+
+  TCPserver.begin();
+  setupHTTPServer();
+
+  set_speed('1');
+  motorState = 'S';
+  directionState = 'C';
+
+  applyMotor();
+  applyDirection();
+}
+
+// ===============================
+// LOOP
+// ===============================
 void loop() {
-  server.handleClient();
-  delay(1);
+  HTTPserver.handleClient();
+
+  Clientconnecte(TCPserver, client);
+
+  if (client && client.available()) {
+    char c = client.read();
+    command_motor(c);
+  }
 }
